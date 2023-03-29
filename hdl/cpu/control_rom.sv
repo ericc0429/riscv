@@ -13,24 +13,12 @@ function void set_defaults();
     ctrl.aluop = alu_ops'(funct3);
     ctrl.regfilemux_sel = regfilemux::alu_out;
     ctrl.load_regfile = 1'b0;
-    ctrl.pcmux_sel = pcmux::pc_plus4;
-    ctrl.load_pc = 1'b0;
     ctrl.alumux1_sel = alumux::rs1_out;
     ctrl.alumux2_sel = alumux::i_imm;
     ctrl.cmpop = branch_funct3_t'(funct3);
     ctrl.cmpmux_sel = cmpmux::rs2_out;
-    ctrl.rdmux_sel = 1'b0;
     ctrl.mem_read = 1'b0;
     ctrl.mem_write = 1'b0;
-
-    /* Unused signals from MP3 cpu control
-    load_ir = 1'b0;
-    load_mar = 1'b0;
-    load_mdr = 1'b0;
-    load_data_out = 1'b0;
-    marmux_sel = marmux::pc_out;
-    mem_byte_enable = 4'b1111;
-    */
 endfunction
 
 function void loadRegfile(regfilemux::regfilemux_sel_t sel);

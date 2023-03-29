@@ -75,13 +75,10 @@ typedef struct {
     alu_ops aluop;
     regfilemux_sel_t regfilemux_sel;
     logic load_regfile;
-    pcmux_sel_t pcmux_sel;
-    logic load_pc;
     alumux1_sel_t alumux1_sel;
     alumux2_sel_t alumux2_sel;
     branch_funct3_t cmpop;
     cmpmux_sel_t cmpmux_sel;
-    logic rdmux_sel;
     logic mem_write;
     logic mem_read;
 } rv32i_control_word;
