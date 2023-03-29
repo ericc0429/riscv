@@ -93,6 +93,7 @@ begin
         op_br:
         begin
             setALU(alumux::pc_out, alumux::b_imm, 1'b1, alu_add);
+            setCMP(cmpmux::rs2_out, 1'b1, branch_funct3_t'(funct3));
         end
 
         op_load:
