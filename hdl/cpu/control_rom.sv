@@ -33,11 +33,6 @@ function void set_defaults();
     */
 endfunction
 
-function void loadPC(pcmux::pcmux_sel_t sel);
-    ctrl.load_pc = 1'b1;
-    ctrl.pcmux_sel = sel;
-endfunction
-
 function void loadRegfile(regfilemux::regfilemux_sel_t sel);
     load_regfile = 1'b1;
     regfilemux_sel = sel;
@@ -75,34 +70,29 @@ begin
         op_lui:
         begin
             loadRegfile(regfilemux::u_imm);
-            loadPC(pcmux::pc_plus4);
         end
 
         op_auipc:
         begin
             setALU(alumux::pc_out, alumux::u_imm, 1'b1, alu_add);
             loadRegfile(regfilemux::alu_out);
-            loadPC(pcmux::pc_plus4);
         end
 
         op_jal:
         begin
             setALU(alumux::pc_out, alumux::j_imm, 1'b1, alu_add); // pc + j_imm
             loadRegfile(regfilemux::pc_plus4); // Write address of next instruction into rd
-            loadPC(pcmux::alu_mod2); // Set LSB of ALU result to zero
         end
 
         op_jalr:
         begin
             setALU(alumux::rs1_out, alumux::i_imm, 1'b1, alu_add);
             loadRegfile(regfilemux::pc_plus4);
-            loadPC(pcmux::alu_mod2);
         end
 
         op_br:
         begin
             setALU(alumux::pc_out, alumux::b_imm, 1'b1, alu_add);
-            // loadPC(pcmux::pcmux_sel_t'({{1'b0}, br_en})); // Unsure what to do here
         end
 
         op_load:
@@ -116,14 +106,12 @@ begin
                 lbu: loadRegfile(regfilemux::lbu);
                 lhu: loadRegfile(regfilemux::lhu);
             endcase
-            loadPC(pcmux::pc_plus4);
         end
 
         op_store:
         begin
             setALU(alumux::rs1_out, alumux::s_imm, 1'b1, alu_add);
             mem_write = 1'b1;
-            loadPC(pcmux::pc_plus4);
         end
 
         op_imm:
@@ -137,14 +125,12 @@ begin
                 begin
                     loadRegfile(regfilemux::br_en);
                     setCMP(cmpmux::i_imm, 1'b1, blt);
-                    loadPC(pcmux::pc_plus4);
                 end
 
                 sltu: // sltiu
                 begin
                     loadRegfile(regfilemux::br_en);
                     setCMP(cmpmux::i_imm, 1'b1, bltu);
-                    loadPC(pcmux::pc_plus4);
                 end
 
                 // axor: // xori
@@ -154,7 +140,6 @@ begin
                     loadRegfile(regfilemux::alu_out);
                     if (funct7[5]) setALU(alumux::rs1_out, alumux::i_imm, 1'b1, alu_sra);
                     else setALU(alumux::rs1_out, alumux::i_imm, 1'b1, alu_srl);
-                    loadPC(pcmux::pc_plus4);
                 end
 
                 // aor: // ori
@@ -165,7 +150,6 @@ begin
                 begin
                     loadRegfile(regfilemux::alu_out);
                     setALU(alumux::rs1_out, alumux::i_imm, 1'b1, alu_ops'(funct3));
-                    loadPC(pcmux::pc_plus4);
                 end
             endcase
         end
@@ -179,7 +163,6 @@ begin
                     loadRegfile(regfilemux::alu_out);
                     if (funct7[5]) setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_sub); // sub
                     else setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_add); // add
-                    loadPC(pcmux::pc_plus4);
                 end
 
                 // sll:
@@ -188,14 +171,12 @@ begin
                 begin
                     loadRegfile(regfilemux::br_en);
                     setCMP(cmpmux::rs2_out, 1'b1, blt);
-                    loadPC(pcmux::pc_plus4);
                 end
 
                 sltu:
                 begin
                     loadRegfile(regfilemux::br_en);
                     setCMP(cmpmux::rs2_out, 1'b1, bltu);
-                    loadPC(pcmux::pc_plus4);
                 end
 
                 // axor: // xor
@@ -205,7 +186,6 @@ begin
                     loadRegfile(regfilemux::alu_out);
                     if (funct7[5]) setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_sra);
                     else setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_srl);
-                    loadPC(pcmux::pc_plus4);
                 end
 
                 // or:
@@ -215,7 +195,6 @@ begin
                 begin
                     loadRegfile(regfilemux::alu_out);
                     setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_ops'(funct3));
-                    loadPC(pcmux::pc_plus4);
                 end
             endcase
         end
