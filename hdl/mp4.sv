@@ -6,14 +6,14 @@ import rv32i_types::*;
     input rst,
 	
 	//Remove after CP1
-    input 					instr_mem_resp,
+    input 				instr_mem_resp,
     input rv32i_word 	instr_mem_rdata,
-	input 					data_mem_resp,
+	input 				data_mem_resp,
     input rv32i_word 	data_mem_rdata, 
-    output logic 			instr_read,
+    output logic 		instr_read,
 	output rv32i_word 	instr_mem_address,
-    output logic 			data_read,
-    output logic 			data_write,
+    output logic 		data_read,
+    output logic 		data_write,
     output logic [3:0] 	data_mbe,
     output rv32i_word 	data_mem_address,
     output rv32i_word 	data_mem_wdata
@@ -31,5 +31,20 @@ import rv32i_types::*;
     output [63:0] pmem_wdata
 	*/
 );
+
+/* ================ INTERNAL SIGNALS ================ */
+
+// control to datapath
+rv32i_control_word ctrl;
+    
+// datapath to control
+rv32i_opcode opcode;
+logic [2:0] funct3;
+logic [6:0] funct7;
+
+/* ================ TOP-LEVEL BLOCKS ================ */
+
+datapath datapath(.*);
+
 
 endmodule : mp4

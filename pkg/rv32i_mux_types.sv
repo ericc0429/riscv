@@ -26,6 +26,15 @@ typedef enum bit {
     ,pc_out = 1'b1
 } alumux1_sel_t;
 
+/* typedef enum bit [2:0] {
+    i_imm    = 3'b000
+    ,u_imm   = 3'b001
+    ,b_imm   = 3'b010
+    ,s_imm   = 3'b011
+    ,j_imm   = 3'b100
+    ,rs2_out = 3'b101
+} alumux2_sel_t; */
+
 typedef enum bit [2:0] {
     i_imm    = 3'b000
     ,u_imm   = 3'b001
@@ -33,6 +42,7 @@ typedef enum bit [2:0] {
     ,s_imm   = 3'b011
     ,j_imm   = 3'b100
     ,rs2_out = 3'b101
+    ,b_imm_sl2 = 3'b110
 } alumux2_sel_t;
 endpackage
 
@@ -48,5 +58,5 @@ typedef enum bit [3:0] {
     ,lh        = 4'b0111
     ,lhu       = 4'b1000  // unsigned halfword
 } regfilemux_sel_t;
-endpackage
 
+endpackage

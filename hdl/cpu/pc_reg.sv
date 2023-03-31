@@ -16,7 +16,7 @@ always_ff @(posedge clk)
 begin
     if (rst)
     begin
-        data <= 32'h00000060;
+        data <= 32'h80000000;
     end
     else if (load)
     begin

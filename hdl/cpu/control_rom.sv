@@ -1,15 +1,17 @@
+module control_rom 
 import rv32i_types::*;
-
-module control_rom (
-    input rv32i_opcode opcode;
-    input logic [2:0] funct3;
-    input logic [6:0] funct7;
-    output rv32i_control_word ctrl;
+(
+    input rv32i_opcode opcode,
+    input logic [2:0] funct3,
+    input logic [6:0] funct7,
+    output rv32i_control_word ctrl
 );
 
 /* ======== Function Definitions ======== */
 function void set_defaults();
     ctrl.opcode = opcode;
+    ctrl.funct3 = funct3;
+    ctrl.funct7 = funct7;
     ctrl.aluop = alu_ops'(funct3);
     ctrl.regfilemux_sel = regfilemux::alu_out;
     ctrl.load_regfile = 1'b0;
@@ -19,27 +21,28 @@ function void set_defaults();
     ctrl.cmpmux_sel = cmpmux::rs2_out;
     ctrl.mem_read = 1'b0;
     ctrl.mem_write = 1'b0;
+    ctrl.br_sel = 1'b0;
+    // ctrl.mem_byte_enable = 4'b1111;
 endfunction
 
 function void loadRegfile(regfilemux::regfilemux_sel_t sel);
-    load_regfile = 1'b1;
-    regfilemux_sel = sel;
+    ctrl.load_regfile = 1'b1;
+    ctrl.regfilemux_sel = sel;
 endfunction
 
-function void setALU(alumux::alumux1_sel_t sel1, alumux::alumux2_sel_t sel2, logic setop, alu_ops op);
-    /* Student code here */
+function void setALU(alumux::alumux1_sel_t sel1, alumux::alumux2_sel_t sel2, logic setop = '0, alu_ops op);
     if (setop)
         begin
-            ctrl.aluop = op; // else default value
-            // We also have to set the alumux selector values
+            ctrl.aluop = op;
             ctrl.alumux1_sel = sel1;
             ctrl.alumux2_sel = sel2;
         end
 endfunction
 
-function automatic void setCMP(cmpmux::cmpmux_sel_t sel, logic setop, branch_funct3_t op);
+function automatic void setCMP(cmpmux::cmpmux_sel_t sel, logic setop = '0, branch_funct3_t op);
     if (setop)
         begin
+            ctrl.br_sel = 1'b1;
             ctrl.cmpop = op;
             ctrl.cmpmux_sel = sel;
         end
@@ -62,13 +65,13 @@ begin
 
         op_auipc:
         begin
-            setALU(alumux::pc_out, alumux::u_imm, 1'b1, alu_add);
+            setALU(alumux::pc_out, alumux::u_imm, 1'b1, alu_add);   // pc + u_imm
             loadRegfile(regfilemux::alu_out);
         end
 
         op_jal:
         begin
-            setALU(alumux::pc_out, alumux::j_imm, 1'b1, alu_add); // pc + j_imm
+            setALU(alumux::pc_out, alumux::j_imm, 1'b1, alu_add);   // pc + j_imm
             loadRegfile(regfilemux::pc_plus4); // Write address of next instruction into rd
         end
 
@@ -82,6 +85,7 @@ begin
         begin
             setALU(alumux::pc_out, alumux::b_imm, 1'b1, alu_add);
             setCMP(cmpmux::rs2_out, 1'b1, branch_funct3_t'(funct3));
+            // ctrl.br_sel = '1;
         end
 
         op_load:
@@ -100,52 +104,55 @@ begin
         op_store:
         begin
             setALU(alumux::rs1_out, alumux::s_imm, 1'b1, alu_add);
-            mem_write = 1'b1;
+            ctrl.mem_write = 1'b1;
+            // case(store_funct3_t'(funct3))
+            //     sw: ctrl.mem_byte_enable = 4'b1111;
+            //     sh: ctrl.mem_byte_enable = 4'b1111;
+            //     sb: ctrl.mem_byte_enable = 4'b1111;
+            // endcase
         end
 
         op_imm:
         begin
             case (arith_funct3_t'(funct3))
-                // add: // addi
+                // add:    // addi
+                // sll:    // slli
 
-                // sll: // slli
-
-                slt: // slti
+                slt:    // slti
                 begin
                     loadRegfile(regfilemux::br_en);
                     setCMP(cmpmux::i_imm, 1'b1, blt);
                 end
 
-                sltu: // sltiu
+                sltu:   // sltiu
                 begin
                     loadRegfile(regfilemux::br_en);
                     setCMP(cmpmux::i_imm, 1'b1, bltu);
                 end
 
-                // axor: // xori
+                // axor:   // xori
 
-                sr: // Check bit30 to determine if logical (0) or arithmetic (1)
+                sr:     // srli/srai, check bit30 to determine if logical (0) or arithmetic (1)
                 begin
                     loadRegfile(regfilemux::alu_out);
                     if (funct7[5]) setALU(alumux::rs1_out, alumux::i_imm, 1'b1, alu_sra);
                     else setALU(alumux::rs1_out, alumux::i_imm, 1'b1, alu_srl);
                 end
 
-                // aor: // ori
-
-                // aand: // andi
+                // aor:    // ori
+                // aand:   // andi
 
                 default:
                 begin
                     loadRegfile(regfilemux::alu_out);
-                    setALU(alumux::rs1_out, alumux::i_imm, 1'b1, alu_ops'(funct3));
+                    setALU(alumux::rs1_out, alumux::i_imm, 1'b1, alu_ops'(funct3)); // cant do this, not of same type
                 end
             endcase
         end
 
         op_reg:
         begin
-            case (arith_funct3)
+            case (arith_funct3_t'(funct3))
                 // add/sub -- check bit30 for sub if op_reg opcode
                 add:
                 begin
@@ -168,17 +175,17 @@ begin
                     setCMP(cmpmux::rs2_out, 1'b1, bltu);
                 end
 
-                // axor: // xor
+                // axor:    // xor
 
-                sr: // Check bit30 to determine if logical (0) or arithmetic (1)
+                sr:     // srl/sra, check bit30 to determine if logical (0) or arithmetic (1)
                 begin
                     loadRegfile(regfilemux::alu_out);
                     if (funct7[5]) setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_sra);
                     else setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_srl);
                 end
 
-                // or:
-                // and:
+                // aor:     //or
+                // aand:    //and
 
                 default:
                 begin
@@ -189,7 +196,7 @@ begin
         end
 
         default: begin
-            ctrl = 0;   /* Unknown opcode, set control word to zero */
+            ctrl = '0;   /* Unknown opcode, set control word to zero */
         end
     endcase
 
