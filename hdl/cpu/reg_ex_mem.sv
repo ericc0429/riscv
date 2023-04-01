@@ -18,6 +18,7 @@ import rv32i_types::*;
 
     input rv32i_word addr_in,
     output rv32i_word addr_out,
+    output logic [1:0] bit_shift,
 
     input logic br_en_in,
     output logic br_en_out,
@@ -52,6 +53,7 @@ begin
     begin
         write_data_out <= '0;
         addr_out <= '0;
+        bit_shift <= '0;
         br_en_out <= '0;
         pc_out <= '0;
         rd_out <= '0;
@@ -63,7 +65,8 @@ begin
     else if (load)
     begin
         write_data_out <= write_data_in;
-        addr_out <= addr_in;
+        addr_out <= {addr_in[31:2],2'b00};
+        bit_shift <= addr_in[1:0];
         br_en_out <= br_en_in;
         pc_out <= pc_in;
         rd_out <= rd_in;
@@ -76,6 +79,7 @@ begin
     begin
         write_data_out <= write_data_out;
         addr_out <= addr_out;
+        bit_shift <= bit_shift;
         br_en_out <= br_en_out;
         pc_out <= pc_out;
         rd_out <= rd_out;

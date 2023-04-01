@@ -15,7 +15,7 @@ sim/simv: $(SRCS)
 	cd sim && vcs $(SRCS) $(VCS_FLAGS) 
 
 run: sim/simv $(ASM)
-	bin/memory_from_source.sh $(ASM) 2>&1 | tee sim/asm.log
+	bin/generate_memory_file.sh $(ASM) 2>&1 | tee sim/asm.log
 	cd sim && ./simv -l simulation.log
 
 synth: $(SRCS) $(SYNTH_TCL) 

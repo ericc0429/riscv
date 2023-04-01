@@ -25,6 +25,9 @@ import rv32i_types::*;
     output rv32i_word mem_addr_out,
     output rv32i_word mem_rdata_out,
 
+    input logic [1:0] bit_shift_in,
+    output logic [1:0] bit_shift_out,
+
     output rv32i_reg rd_out,
     output logic br_en_out,
 
@@ -39,6 +42,7 @@ begin
         rd_out <= '0;
         mem_rdata_out <= '0;
         mem_addr_out <= '0;
+        bit_shift_out <= '0;
         ctrl_word_out <= '0;
         br_en_out <= '0;
         u_imm_out <= '0;
@@ -50,6 +54,7 @@ begin
         rd_out <= rd;
         mem_rdata_out <= mem_rdata;
         mem_addr_out <= mem_addr;
+        bit_shift_out <= bit_shift_in;
         ctrl_word_out <= ctrl_word;
         br_en_out <= br_en_in;
         u_imm_out <= u_imm_in;
@@ -61,6 +66,7 @@ begin
         rd_out <= rd_out;
         mem_rdata_out <= mem_rdata_out;
         mem_addr_out <= mem_addr_out;
+        bit_shift_out <= bit_shift_out;
         ctrl_word_out <= ctrl_word_out;
         br_en_out <= br_en_out;
         u_imm_out <= u_imm_out;

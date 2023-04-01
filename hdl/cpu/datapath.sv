@@ -99,6 +99,8 @@ logic br_en_wr;
 
 rv32i_word rdata_wr;
 rv32i_word data_addr_wr;
+logic [1:0] bit_shift_mem;
+logic [1:0] bit_shift_wr;
 
 rv32i_word wdata_out;
 
@@ -119,7 +121,7 @@ pc_register PC (
 regfile regfile (
     .clk,
     .rst,
-    .load   (ctrl.load_regfile),
+    .load   (ctrl_wr.load_regfile),
     .in     (regfilemux_out),
     .src_a  (rs1),
     .src_b  (rs2),
@@ -241,6 +243,8 @@ reg_ex_mem EX_MEM (
     .addr_in(alu_out),
     .addr_out(data_mem_address),
 
+    .bit_shift(bit_shift_mem),
+
     .br_en_in(br_en),
     .br_en_out(br_en_mem),
 
@@ -260,6 +264,7 @@ reg_mem_wr MEM_WR (
 
     .ctrl_word(ctrl_mem),
     .mem_addr(data_mem_address),
+    .bit_shift_in(bit_shift_mem),
     .mem_rdata(data_mem_rdata),
     .rd(rd_mem),
     .br_en_in(br_en_mem),
@@ -268,16 +273,13 @@ reg_mem_wr MEM_WR (
 
     .ctrl_word_out(ctrl_wr),
     .mem_addr_out(data_addr_wr),
+    .bit_shift_out(bit_shift_wr),
     .mem_rdata_out(rdata_wr),
     .rd_out(rd_wr),
     .br_en_out(br_en_wr),
     .u_imm_out(u_imm_wr),
     .pc_out(pc_wr)
 );
-
-rv32i_word shifted_val;
-assign shifted_val = rdata_wr >> (8 * data_addr_wr[1:0]);
-
 
 assign data_mem_wdata = wdata_out << (8 * data_addr_wr[1:0]);
 
@@ -326,10 +328,34 @@ always_comb begin : MUXES
         regfilemux::lw:      regfilemux_out = rdata_wr;
 
         regfilemux::pc_plus4: regfilemux_out = pc_wr + 4;
-        regfilemux::lb:     regfilemux_out = 32'(signed'(shifted_val[7:0]));
-        regfilemux::lbu:    regfilemux_out = 32'(unsigned'(shifted_val[7:0]));
-        regfilemux::lh:     regfilemux_out = 32'(signed'(shifted_val[15:0]));
-        regfilemux::lhu:    regfilemux_out = 32'(unsigned'(shifted_val[15:0]));
+        regfilemux::lb: begin
+            case(bit_shift_wr)
+                2'b00: regfilemux_out = {{24{rdata_wr[7]}},rdata_wr[7:0]};
+                2'b01: regfilemux_out = {{24{rdata_wr[15]}},rdata_wr[15:8]};
+                2'b10: regfilemux_out = {{24{rdata_wr[23]}},rdata_wr[23:16]};
+                2'b11: regfilemux_out = {{24{rdata_wr[31]}},rdata_wr[31:24]};
+            endcase
+        end
+        regfilemux::lbu: begin
+            case(bit_shift_wr)
+                2'b00: regfilemux_out = {24'd0,rdata_wr[7:0]};
+                2'b01: regfilemux_out = {24'd0,rdata_wr[15:8]};
+                2'b10: regfilemux_out = {24'd0,rdata_wr[23:16]};
+                2'b11: regfilemux_out = {24'd0,rdata_wr[31:24]};
+            endcase
+        end
+        regfilemux::lh:  begin
+            case(bit_shift_wr)
+                2'b00: regfilemux_out = {{16{rdata_wr[15]}},rdata_wr[15:0]};
+                2'b10: regfilemux_out = {{16{rdata_wr[31]}},rdata_wr[31:16]};
+            endcase
+        end
+        regfilemux::lhu: begin
+            case(bit_shift_wr)
+                2'b00: regfilemux_out = {16'd0,rdata_wr[15:0]};
+                2'b10: regfilemux_out = {16'd0,rdata_wr[31:16]};
+            endcase
+        end
     endcase
     
 end
