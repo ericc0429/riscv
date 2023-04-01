@@ -30,7 +30,7 @@ function void loadRegfile(regfilemux::regfilemux_sel_t sel);
     ctrl.regfilemux_sel = sel;
 endfunction
 
-function void setALU(alumux::alumux1_sel_t sel1, alumux::alumux2_sel_t sel2, logic setop = '0, alu_ops op);
+function void setALU(alumux::alumux1_sel_t sel1, alumux::alumux2_sel_t sel2, logic setop, alu_ops op);
     if (setop)
         begin
             ctrl.aluop = op;
@@ -39,10 +39,9 @@ function void setALU(alumux::alumux1_sel_t sel1, alumux::alumux2_sel_t sel2, log
         end
 endfunction
 
-function automatic void setCMP(cmpmux::cmpmux_sel_t sel, logic setop = '0, branch_funct3_t op);
+function automatic void setCMP(cmpmux::cmpmux_sel_t sel, logic setop, branch_funct3_t op);
     if (setop)
         begin
-            ctrl.br_sel = 1'b1;
             ctrl.cmpop = op;
             ctrl.cmpmux_sel = sel;
         end
@@ -73,18 +72,21 @@ begin
         begin
             setALU(alumux::pc_out, alumux::j_imm, 1'b1, alu_add);   // pc + j_imm
             loadRegfile(regfilemux::pc_plus4); // Write address of next instruction into rd
+            ctrl.br_sel = 1'b1;
         end
 
         op_jalr:
         begin
             setALU(alumux::rs1_out, alumux::i_imm, 1'b1, alu_add);
             loadRegfile(regfilemux::pc_plus4);
+            ctrl.br_sel = 1'b1;
         end
 
         op_br:
         begin
             setALU(alumux::pc_out, alumux::b_imm, 1'b1, alu_add);
             setCMP(cmpmux::rs2_out, 1'b1, branch_funct3_t'(funct3));
+            ctrl.br_sel = 1'b1;
             // ctrl.br_sel = '1;
         end
 

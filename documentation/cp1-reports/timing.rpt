@@ -1,0 +1,99 @@
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -max_paths 1
+Design : mp4
+Version: R-2020.09-SP4
+Date   : Fri Mar 31 21:59:51 2023
+****************************************
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+  Startpoint: datapath/ID_EX/ctrl_word_out_reg[alumux2_sel][2]
+              (rising edge-triggered flip-flop clocked by my_clk)
+  Endpoint: datapath/regfile/data_reg[1][31]
+            (rising edge-triggered flip-flop clocked by my_clk)
+  Path Group: my_clk
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  mp4                5K_hvratio_1_1        NangateOpenCellLibrary
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock my_clk (rise edge)                                0.00       0.00
+  clock network delay (ideal)                             0.00       0.00
+  datapath/ID_EX/ctrl_word_out_reg[alumux2_sel][2]/CK (DFF_X1)
+                                                          0.00       0.00 r
+  datapath/ID_EX/ctrl_word_out_reg[alumux2_sel][2]/Q (DFF_X1)
+                                                          0.11       0.11 r
+  datapath/ID_EX/ctrl_word_out[alumux2_sel][2] (reg_id_ex)
+                                                          0.00       0.11 r
+  datapath/U10/ZN (NAND2_X1)                              0.04       0.15 f
+  datapath/U19/ZN (NOR2_X1)                               0.16       0.31 r
+  datapath/U20/Z (CLKBUF_X1)                              0.18       0.49 r
+  datapath/U21/ZN (AOI22_X1)                              0.07       0.56 f
+  datapath/U22/ZN (OAI211_X1)                             0.05       0.60 r
+  datapath/U23/Z (CLKBUF_X1)                              0.13       0.74 r
+  datapath/ALU/b[2] (alu_0)                               0.00       0.74 r
+  datapath/ALU/U27/ZN (INV_X1)                            0.10       0.84 f
+  datapath/ALU/U37/ZN (INV_X1)                            0.14       0.98 r
+  datapath/ALU/U140/Z (XOR2_X1)                           0.07       1.05 f
+  datapath/ALU/U208/CO (FA_X1)                            0.11       1.16 f
+  datapath/ALU/U335/CO (FA_X1)                            0.09       1.25 f
+  datapath/ALU/U358/CO (FA_X1)                            0.09       1.34 f
+  datapath/ALU/U381/CO (FA_X1)                            0.09       1.43 f
+  datapath/ALU/U399/CO (FA_X1)                            0.09       1.52 f
+  datapath/ALU/U673/CO (FA_X1)                            0.09       1.61 f
+  datapath/ALU/U414/CO (FA_X1)                            0.09       1.70 f
+  datapath/ALU/U428/CO (FA_X1)                            0.09       1.79 f
+  datapath/ALU/U449/CO (FA_X1)                            0.09       1.88 f
+  datapath/ALU/U468/CO (FA_X1)                            0.09       1.97 f
+  datapath/ALU/U482/CO (FA_X1)                            0.09       2.06 f
+  datapath/ALU/U499/CO (FA_X1)                            0.09       2.15 f
+  datapath/ALU/U518/CO (FA_X1)                            0.09       2.24 f
+  datapath/ALU/U556/CO (FA_X1)                            0.09       2.33 f
+  datapath/ALU/U687/CO (FA_X1)                            0.09       2.43 f
+  datapath/ALU/U700/CO (FA_X1)                            0.09       2.52 f
+  datapath/ALU/U713/CO (FA_X1)                            0.09       2.61 f
+  datapath/ALU/U725/CO (FA_X1)                            0.09       2.70 f
+  datapath/ALU/U736/CO (FA_X1)                            0.09       2.79 f
+  datapath/ALU/U746/CO (FA_X1)                            0.09       2.88 f
+  datapath/ALU/U763/CO (FA_X1)                            0.09       2.97 f
+  datapath/ALU/U775/CO (FA_X1)                            0.09       3.06 f
+  datapath/ALU/U576/CO (FA_X1)                            0.09       3.15 f
+  datapath/ALU/U600/CO (FA_X1)                            0.09       3.24 f
+  datapath/ALU/U786/CO (FA_X1)                            0.09       3.33 f
+  datapath/ALU/U798/CO (FA_X1)                            0.09       3.42 f
+  datapath/ALU/U617/CO (FA_X1)                            0.09       3.51 f
+  datapath/ALU/U639/CO (FA_X1)                            0.09       3.60 f
+  datapath/ALU/U660/CO (FA_X1)                            0.09       3.69 f
+  datapath/ALU/U663/Z (XOR2_X1)                           0.07       3.76 f
+  datapath/ALU/U664/ZN (AND2_X1)                          0.04       3.79 f
+  datapath/ALU/U665/ZN (OR2_X1)                           0.06       3.86 f
+  datapath/ALU/f[31] (alu_0)                              0.00       3.86 f
+  datapath/U454/ZN (AOI22_X1)                             0.06       3.92 r
+  datapath/U507/ZN (NAND4_X1)                             0.04       3.96 f
+  datapath/regfile/in[31] (regfile)                       0.00       3.96 f
+  datapath/regfile/U1541/ZN (AND2_X1)                     0.12       4.08 f
+  datapath/regfile/data_reg[1][31]/D (DFF_X1)             0.03       4.11 f
+  data arrival time                                                  4.11
+
+  clock my_clk (rise edge)                               10.00      10.00
+  clock network delay (ideal)                             0.00      10.00
+  clock uncertainty                                      -0.10       9.90
+  datapath/regfile/data_reg[1][31]/CK (DFF_X1)            0.00       9.90 r
+  library setup time                                     -0.06       9.84
+  data required time                                                 9.84
+  --------------------------------------------------------------------------
+  data required time                                                 9.84
+  data arrival time                                                 -4.11
+  --------------------------------------------------------------------------
+  slack (MET)                                                        5.73
+
+
+1

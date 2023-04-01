@@ -1,0 +1,119 @@
+ 
+****************************************
+Report : area
+Design : mp4
+Version: R-2020.09-SP4
+Date   : Fri Mar 31 21:59:51 2023
+****************************************
+
+Information: Updating design information... (UID-85)
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /class/ece411/freepdk-45nm/stdcells.db)
+
+Number of ports:                         2842
+Number of nets:                          7559
+Number of cells:                         5577
+Number of combinational cells:           3718
+Number of sequential cells:              1651
+Number of macros/black boxes:               0
+Number of buf/inv:                        368
+Number of references:                       2
+
+Combinational area:               4379.158065
+Buf/Inv area:                      219.450000
+Noncombinational area:            7449.329735
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (Wire load has zero net area)
+
+Total cell area:                 11828.487800
+Total area:                 undefined
+
+Hierarchical area distribution
+------------------------------
+
+                                  Global cell area           Local cell area
+                                  -------------------  ---------------------------- 
+Hierarchical cell                 Absolute    Percent  Combi-     Noncombi-  Black-
+                                  Total       Total    national   national   boxes   Design
+--------------------------------  ----------  -------  ---------  ---------  ------  -------------------------------
+mp4                               11828.4878    100.0     1.0640     0.0000  0.0000  mp4
+datapath                          11827.4238    100.0   610.7360     0.0000  0.0000  datapath
+datapath/ALU                        953.6100      8.1   953.6100     0.0000  0.0000  alu_0
+datapath/ALU_PC                      69.4260      0.6    69.4260     0.0000  0.0000  alu_1
+datapath/CMP                        163.3240      1.4   163.3240     0.0000  0.0000  cmp
+datapath/CONTROL_ROM                 86.7160      0.7    86.7160     0.0000  0.0000  control_rom
+datapath/EX_MEM                     726.7120      6.1   111.7200   614.9920  0.0000  reg_ex_mem
+datapath/ID_EX                     1372.2940     11.6   155.8760  1216.4180  0.0000  reg_id_ex
+datapath/IF_ID                      358.5680      3.0     0.0000     0.0000  0.0000  reg_if_id
+datapath/IF_ID/IR                   179.2840      1.5    34.5800   144.7040  0.0000  ir
+datapath/IF_ID/PC                   179.2840      1.5    34.5800   144.7040  0.0000  register
+datapath/MEM_WR                     711.8160      6.0   137.5220   574.2940  0.0000  reg_mem_wr
+datapath/PC                         179.2840      1.5    34.5800   144.7040  0.0000  pc_register
+datapath/regfile                   6594.9379     55.8  1985.4240  4485.8238  0.0000  regfile
+datapath/regfile/clk_gate_data_reg[10]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_22
+datapath/regfile/clk_gate_data_reg[11]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_21
+datapath/regfile/clk_gate_data_reg[12]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_20
+datapath/regfile/clk_gate_data_reg[13]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_19
+datapath/regfile/clk_gate_data_reg[14]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_18
+datapath/regfile/clk_gate_data_reg[15]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_17
+datapath/regfile/clk_gate_data_reg[16]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_16
+datapath/regfile/clk_gate_data_reg[17]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_15
+datapath/regfile/clk_gate_data_reg[18]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_14
+datapath/regfile/clk_gate_data_reg[19]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_13
+datapath/regfile/clk_gate_data_reg[1]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_31
+datapath/regfile/clk_gate_data_reg[20]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_12
+datapath/regfile/clk_gate_data_reg[21]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_11
+datapath/regfile/clk_gate_data_reg[22]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_10
+datapath/regfile/clk_gate_data_reg[23]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_9
+datapath/regfile/clk_gate_data_reg[24]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_8
+datapath/regfile/clk_gate_data_reg[25]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_7
+datapath/regfile/clk_gate_data_reg[26]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_6
+datapath/regfile/clk_gate_data_reg[27]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_5
+datapath/regfile/clk_gate_data_reg[28]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_4
+datapath/regfile/clk_gate_data_reg[29]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_3
+datapath/regfile/clk_gate_data_reg[2]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_30
+datapath/regfile/clk_gate_data_reg[30]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_2
+datapath/regfile/clk_gate_data_reg[31]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_1
+datapath/regfile/clk_gate_data_reg[3]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_29
+datapath/regfile/clk_gate_data_reg[4]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_28
+datapath/regfile/clk_gate_data_reg[5]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_27
+datapath/regfile/clk_gate_data_reg[6]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_26
+datapath/regfile/clk_gate_data_reg[7]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_25
+datapath/regfile/clk_gate_data_reg[8]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_24
+datapath/regfile/clk_gate_data_reg[9]
+                                      3.9900      0.0     0.0000     3.9900  0.0000  SNPS_CLOCK_GATE_HIGH_regfile_23
+--------------------------------  ----------  -------  ---------  ---------  ------  -------------------------------
+Total                                                  4379.1581  7449.3297  0.0000
+
+1

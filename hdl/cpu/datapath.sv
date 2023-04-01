@@ -26,7 +26,8 @@ assign instr_read = '1;
 /* ================ INTERNAL SIGNALS ================ */
 
 // Default load signal
-logic load = 1'b1;
+logic load;
+assign load = 1'b1;
 
 // PC signals
 rv32i_word pcmux_out;
@@ -293,6 +294,7 @@ always_comb begin : MUXES
     unique case (ctrl_ex.cmpmux_sel)
         cmpmux::rs2_out: cmpmux_out = rs2_ex;
         cmpmux::i_imm:   cmpmux_out = i_imm_ex;
+        default: cmpmux_out = i_imm_ex;
     endcase
 
     // PC MUX
@@ -317,6 +319,8 @@ always_comb begin : MUXES
         alumux::s_imm:      alumux2_out = s_imm_ex;
         alumux::j_imm:      alumux2_out = j_imm_ex;
         alumux::rs2_out:    alumux2_out = rs2_ex;
+
+        default: alumux2_out = i_imm_ex;
         // alumux::b_imm_sl2:  alumux2_out = {b_imm_ex[29:0], 2'b00};
     endcase
 
@@ -334,6 +338,7 @@ always_comb begin : MUXES
                 2'b01: regfilemux_out = {{24{rdata_wr[15]}},rdata_wr[15:8]};
                 2'b10: regfilemux_out = {{24{rdata_wr[23]}},rdata_wr[23:16]};
                 2'b11: regfilemux_out = {{24{rdata_wr[31]}},rdata_wr[31:24]};
+                default: regfilemux_out = {{24{rdata_wr[7]}},rdata_wr[7:0]};
             endcase
         end
         regfilemux::lbu: begin
@@ -342,20 +347,25 @@ always_comb begin : MUXES
                 2'b01: regfilemux_out = {24'd0,rdata_wr[15:8]};
                 2'b10: regfilemux_out = {24'd0,rdata_wr[23:16]};
                 2'b11: regfilemux_out = {24'd0,rdata_wr[31:24]};
+                default: regfilemux_out = {24'd0,rdata_wr[7:0]};
             endcase
         end
         regfilemux::lh:  begin
             case(bit_shift_wr)
                 2'b00: regfilemux_out = {{16{rdata_wr[15]}},rdata_wr[15:0]};
                 2'b10: regfilemux_out = {{16{rdata_wr[31]}},rdata_wr[31:16]};
+                default: regfilemux_out = {{16{rdata_wr[15]}},rdata_wr[15:0]};
             endcase
         end
         regfilemux::lhu: begin
             case(bit_shift_wr)
                 2'b00: regfilemux_out = {16'd0,rdata_wr[15:0]};
                 2'b10: regfilemux_out = {16'd0,rdata_wr[31:16]};
+                default: regfilemux_out = {16'd0,rdata_wr[15:0]};
             endcase
         end
+
+        default: regfilemux_out = alu_out;
     endcase
     
 end

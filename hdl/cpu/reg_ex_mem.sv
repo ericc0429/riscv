@@ -44,6 +44,8 @@ begin
         sh: wmask = 4'b0011 << last2addr;
         
         sb: wmask = 4'b0001 << last2addr;
+
+        default: wmask = 4'b1111;
     endcase
 end
 

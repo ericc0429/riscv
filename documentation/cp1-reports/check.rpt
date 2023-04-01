@@ -1,0 +1,57 @@
+ 
+****************************************
+check_design summary:
+Version:     R-2020.09-SP4
+Date:        Fri Mar 31 21:59:51 2023
+****************************************
+
+                   Name                                            Total
+--------------------------------------------------------------------------------
+Cells                                                              43
+    Hier pins without driver and load (LINT-60)                    43
+--------------------------------------------------------------------------------
+
+Warning: In design 'datapath', input pin 'ctrl_word[opcode][6]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[opcode][5]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[opcode][4]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[opcode][3]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[opcode][2]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[opcode][1]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[opcode][0]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[funct3][2]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[funct3][1]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[funct3][0]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[funct7][6]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[funct7][5]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[funct7][4]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[funct7][3]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[funct7][2]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[funct7][1]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[funct7][0]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[aluop][2]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[aluop][1]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[aluop][0]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[alumux1_sel]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[alumux2_sel][2]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[alumux2_sel][1]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[alumux2_sel][0]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[cmpop][2]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[cmpop][1]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[cmpop][0]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[cmpmux_sel]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'ctrl_word[br_sel]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'mem_addr[1]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'mem_addr[0]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'u_imm_in[11]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'u_imm_in[10]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'u_imm_in[9]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'u_imm_in[8]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'u_imm_in[7]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'u_imm_in[6]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'u_imm_in[5]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'u_imm_in[4]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'u_imm_in[3]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'u_imm_in[2]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'u_imm_in[1]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+Warning: In design 'datapath', input pin 'u_imm_in[0]' of hierarchical cell 'MEM_WR' has no internal loads and is not connected to any nets. (LINT-60)
+1
