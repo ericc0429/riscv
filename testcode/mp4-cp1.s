@@ -115,7 +115,7 @@ pcrel_TEMP1_2: auipc x14, %pcrel_hi(TEMP1)
     nop
     nop
     nop
-    blt x0, x1, DONEa
+    bltu x0, x1, DONEa
     nop
     nop
     nop
@@ -154,6 +154,8 @@ HALT:
 
 DONEa:
 pcrel_GOOD: auipc x16, %pcrel_hi(GOOD)
+pcrel_TOHOST: auipc x17, %pcrel_hi(tohost)
+    addi  x18, x0, 1
     nop
     nop
     nop
@@ -162,6 +164,7 @@ pcrel_GOOD: auipc x16, %pcrel_hi(GOOD)
     nop
     nop
     lw x1, %pcrel_lo(pcrel_GOOD)(x16)
+    sw x18, %pcrel_lo(pcrel_TOHOST)(x17)
 DONEb:
     beq x0, x0, DONEb
     nop
@@ -171,3 +174,11 @@ DONEb:
     nop
     nop
     nop
+
+
+.section ".tohost"
+.globl tohost
+tohost: .dword 0
+.section ".fromhost"
+.globl fromhost
+fromhost: .dword 0

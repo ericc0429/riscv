@@ -145,14 +145,14 @@ alu ALU_PC (
 // );
 
 alu ALU (
-    .aluop  (ctrl.aluop),
+    .aluop  (ctrl_ex.aluop),
     .a      (alumux1_out),
     .b      (alumux2_out),
     .f      (alu_out)
 );
 
 cmp CMP (
-    .cmpop  (ctrl.cmpop),
+    .cmpop  (ctrl_ex.cmpop),
     .a      (rs1_ex),
     .b      (cmpmux_out),
     .f      (br_en)
