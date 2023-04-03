@@ -100,6 +100,8 @@ logic br_en_wr;
 
 rv32i_word rdata_wr;
 rv32i_word data_addr_wr;
+rv32i_word orig_addr;
+rv32i_word orig_addr_wr;
 logic [1:0] bit_shift_mem;
 logic [1:0] bit_shift_wr;
 
@@ -244,12 +246,14 @@ reg_ex_mem EX_MEM (
     .addr_in(alu_out),
     .addr_out(data_mem_address),
 
+    .orig_addr_out(orig_addr),
+
     .bit_shift(bit_shift_mem),
 
     .br_en_in(br_en),
     .br_en_out(br_en_mem),
 
-    .write_data_in(alumux2_out),
+    .write_data_in(rs2_ex),
     .write_data_out(wdata_out),
 
     .mem_byte_enable(data_mbe),
@@ -272,6 +276,9 @@ reg_mem_wr MEM_WR (
     .u_imm_in(u_imm_mem),
     .pc_in(pc_mem),
 
+    .orig_addr_in(orig_addr),
+    .orig_addr_out(orig_addr_wr),
+
     .ctrl_word_out(ctrl_wr),
     .mem_addr_out(data_addr_wr),
     .bit_shift_out(bit_shift_wr),
@@ -282,7 +289,8 @@ reg_mem_wr MEM_WR (
     .pc_out(pc_wr)
 );
 
-assign data_mem_wdata = wdata_out << (8 * data_addr_wr[1:0]);
+// assign data_mem_wdata = wdata_out << (8 * data_addr_wr[1:0]);
+assign data_mem_wdata = wdata_out << (8 * orig_addr[1:0]);
 
 logic pc_sel;
 assign pc_sel = br_en & ctrl_ex.br_sel;
@@ -326,7 +334,7 @@ always_comb begin : MUXES
 
     // REGFILE MUX
     unique case (ctrl_wr.regfilemux_sel)
-        regfilemux::alu_out: regfilemux_out = data_addr_wr;
+        regfilemux::alu_out: regfilemux_out = orig_addr_wr;
         regfilemux::br_en:   regfilemux_out = {31'b0, br_en_wr};
         regfilemux::u_imm:   regfilemux_out = u_imm_wr;
         regfilemux::lw:      regfilemux_out = rdata_wr;

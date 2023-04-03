@@ -29,16 +29,18 @@ import rv32i_types::*;
     output logic [3:0] mem_byte_enable,
 
     input rv32i_word u_imm_in,
-    output rv32i_word u_imm_out
+    output rv32i_word u_imm_out,
+
+    output rv32i_word orig_addr_out
 );
 
 logic [1:0] last2addr;
-assign last2addr = addr_out[1:0];
+assign last2addr = addr_in[1:0];
 logic [3:0] wmask;
 
 always_comb
 begin
-    case(ctrl_word_out.funct3)
+    case(ctrl_word.funct3)
         sw: wmask = 4'b1111;
         
         sh: wmask = 4'b0011 << last2addr;
@@ -55,6 +57,7 @@ begin
     begin
         write_data_out <= '0;
         addr_out <= '0;
+        orig_addr_out <= '0;
         bit_shift <= '0;
         br_en_out <= '0;
         pc_out <= '0;
@@ -68,6 +71,7 @@ begin
     begin
         write_data_out <= write_data_in;
         addr_out <= {addr_in[31:2],2'b00};
+        orig_addr_out <= addr_in;
         bit_shift <= addr_in[1:0];
         br_en_out <= br_en_in;
         pc_out <= pc_in;
@@ -81,6 +85,7 @@ begin
     begin
         write_data_out <= write_data_out;
         addr_out <= addr_out;
+        orig_addr_out <= orig_addr_out;
         bit_shift <= bit_shift;
         br_en_out <= br_en_out;
         pc_out <= pc_out;

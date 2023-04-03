@@ -32,7 +32,10 @@ import rv32i_types::*;
     output logic br_en_out,
 
     output rv32i_word u_imm_out,
-    output rv32i_word pc_out
+    output rv32i_word pc_out,
+
+    input rv32i_word orig_addr_in,
+    output rv32i_word orig_addr_out
 );
 
 always_ff @(posedge clk)
@@ -42,6 +45,7 @@ begin
         rd_out <= '0;
         mem_rdata_out <= '0;
         mem_addr_out <= '0;
+        orig_addr_out <= '0;
         bit_shift_out <= '0;
         ctrl_word_out <= '0;
         br_en_out <= '0;
@@ -53,6 +57,7 @@ begin
     begin
         rd_out <= rd;
         mem_rdata_out <= mem_rdata;
+        orig_addr_out <= orig_addr_in;
         mem_addr_out <= mem_addr;
         bit_shift_out <= bit_shift_in;
         ctrl_word_out <= ctrl_word;
@@ -65,6 +70,7 @@ begin
     begin
         rd_out <= rd_out;
         mem_rdata_out <= mem_rdata_out;
+        orig_addr_out <= orig_addr_out;
         mem_addr_out <= mem_addr_out;
         bit_shift_out <= bit_shift_out;
         ctrl_word_out <= ctrl_word_out;
