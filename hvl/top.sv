@@ -92,7 +92,7 @@ dcache signals:
 Please refer to tb_itf.sv for more information.
 */
 
-/* 
+
 assign itf.inst_read    = dut.Icache_read;
 assign itf.inst_addr    = dut.Icache_address;
 assign itf.inst_resp    = dut.Icache_resp;
@@ -105,7 +105,7 @@ assign itf.data_addr    = dut.Dcache_address;
 assign itf.data_wdata   = dut.Dcache_wdata;
 assign itf.data_resp    = dut.Dcache_resp;
 assign itf.data_rdata   = dut.Dcache_rdata;
-*/
+
 
 /*********************** End Shadow Memory Assignments ***********************/
 
