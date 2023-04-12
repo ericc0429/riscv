@@ -3,41 +3,45 @@ import rv32i_types::*;
 
 // ports
 (
+    // inputs
     input clk,
     input rst,
     input logic load,
 
     input rv32i_control_word ctrl_word,
+    input rv32i_word pc,
+    input logic br_en,
+
+    input rv32i_reg rd,
+
+    input rv32i_word alu_res,               // represents new pc, address, or operation result
+    input rv32i_word write_data,
+    input rv32i_word u_imm,
+
+    // outputs
     output rv32i_control_word ctrl_word_out,
-
-    input rv32i_reg rd_in,
-    output rv32i_reg rd_out,
-
-    input rv32i_word pc_in,
     output rv32i_word pc_out,
-
-    input rv32i_word addr_in,
-    output rv32i_word addr_out,
-    output logic [1:0] bit_shift,
-
-    input logic br_en_in,
     output logic br_en_out,
 
-    input rv32i_word write_data_in,
-    output rv32i_word write_data_out,
+    output rv32i_reg rd_out,
 
+    output rv32i_word addr_aligned,         // aligned to 4B (i.e. last 2 bits = 00)
+    output rv32i_word alu_res_out,          // represents original addr or operation result
+    output logic [1:0] bit_shift,
     output logic [3:0] mem_byte_enable,
 
-    input rv32i_word u_imm_in,
-    output rv32i_word u_imm_out,
-
-    output rv32i_word orig_addr_out
+    output rv32i_word write_data_out,
+    output rv32i_word u_imm_out
 );
 
+rv32i_word addr;      // purely for clarity
+assign addr = alu_res;
+
 logic [1:0] last2addr;
-assign last2addr = addr_in[1:0];
+assign last2addr = addr[1:0];
 logic [3:0] wmask;
 
+// determine byte enable based on last 2 bits of address
 always_comb
 begin
     case(ctrl_word.funct3)
@@ -55,43 +59,52 @@ always_ff @(posedge clk)
 begin
     if (rst)
     begin
-        write_data_out <= '0;
-        addr_out <= '0;
-        orig_addr_out <= '0;
-        bit_shift <= '0;
-        br_en_out <= '0;
-        pc_out <= '0;
-        rd_out <= '0;
         ctrl_word_out <= '0;
+        pc_out <= '0;
+        br_en_out <= '0;
+
+        rd_out <= '0;
+
+        addr_aligned <= '0;
+        alu_res_out <= '0;
+        bit_shift <= '0;
         mem_byte_enable <= '0;
+
+        write_data_out <= '0;
         u_imm_out <= '0;
     end
 
     else if (load)
     begin
-        write_data_out <= write_data_in;
-        addr_out <= {addr_in[31:2],2'b00};
-        orig_addr_out <= addr_in;
-        bit_shift <= addr_in[1:0];
-        br_en_out <= br_en_in;
-        pc_out <= pc_in;
-        rd_out <= rd_in;
         ctrl_word_out <= ctrl_word;
+        pc_out <= pc;
+        br_en_out <= br_en;
+
+        rd_out <= rd;
+
+        addr_aligned <= {addr[31:2],2'b00};
+        alu_res_out <= alu_res;
+        bit_shift <= addr[1:0];
         mem_byte_enable <= wmask;
-        u_imm_out <= u_imm_in;
+
+        write_data_out <= write_data;
+        u_imm_out <= u_imm;
     end
     
     else
     begin
-        write_data_out <= write_data_out;
-        addr_out <= addr_out;
-        orig_addr_out <= orig_addr_out;
-        bit_shift <= bit_shift;
-        br_en_out <= br_en_out;
-        pc_out <= pc_out;
-        rd_out <= rd_out;
         ctrl_word_out <= ctrl_word_out;
+        pc_out <= pc_out;
+        br_en_out <= br_en_out;
+
+        rd_out <= rd_out;
+
+        addr_aligned <= addr_aligned;
+        alu_res_out <= alu_res_out;
+        bit_shift <= bit_shift;
         mem_byte_enable <= mem_byte_enable;
+
+        write_data_out <= write_data_out;
         u_imm_out <= u_imm_out;
     end
 end

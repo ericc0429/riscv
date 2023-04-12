@@ -92,6 +92,21 @@ dcache signals:
 Please refer to tb_itf.sv for more information.
 */
 
+/* 
+assign itf.inst_read    = dut.Icache_read;
+assign itf.inst_addr    = dut.Icache_address;
+assign itf.inst_resp    = dut.Icache_resp;
+assign itf.inst_rdata   = dut.Icache_rdata;
+
+assign itf.data_read    = dut.Dcache_read;
+assign itf.data_write   = dut.Dcache_write;
+assign itf.data_mbe     = dut.data_mbe;
+assign itf.data_addr    = dut.Dcache_address;
+assign itf.data_wdata   = dut.Dcache_wdata;
+assign itf.data_resp    = dut.Dcache_resp;
+assign itf.data_rdata   = dut.Dcache_rdata;
+*/
+
 /*********************** End Shadow Memory Assignments ***********************/
 
 // Set this to the proper value
@@ -115,7 +130,8 @@ mp4 dut(
     .clk(itf.clk),
     .rst(itf.rst),
     
-     // Remove after CP1
+    // Remove after CP1
+    
     .instr_mem_resp(itf.inst_resp),
     .instr_mem_rdata(itf.inst_rdata),
 	.data_mem_resp(itf.data_resp),
@@ -127,17 +143,46 @@ mp4 dut(
     .data_mbe(itf.data_mbe),
     .data_mem_address(itf.data_addr),
     .data_mem_wdata(itf.data_wdata)
+    
 
 
-    /* Use for CP2 onwards
-    .pmem_read(itf.mem_read),
-    .pmem_write(itf.mem_write),
-    .pmem_wdata(itf.mem_wdata),
-    .pmem_rdata(itf.mem_rdata),
-    .pmem_address(itf.mem_addr),
-    .pmem_resp(itf.mem_resp)
-    */
+    // Use for CP2 onwards
+    // .pmem_read(itf.mem_read),
+    // .pmem_write(itf.mem_write),
+    // .pmem_wdata(itf.mem_wdata),
+    // .pmem_rdata(itf.mem_rdata),
+    // .pmem_address(itf.mem_addr),
+    // .pmem_resp(itf.mem_resp)
+   
 );
+
+// riscv_formal_monitor_rv32imc monitor (
+//   .clock,
+//   .reset,
+//   .rvfi_valid,
+//   .rvfi_order,
+//   .rvfi_insn,
+//   .rvfi_trap,
+//   .rvfi_halt,
+//   .rvfi_intr,
+//   .rvfi_mode,
+//   .rvfi_rs1_addr,
+//   .rvfi_rs2_addr,
+//   .rvfi_rs1_rdata,
+//   .rvfi_rs2_rdata,
+//   .rvfi_rd_addr,
+//   .rvfi_rd_wdata,
+//   .rvfi_pc_rdata,
+//   .rvfi_pc_wdata,
+//   .rvfi_mem_addr,
+//   .rvfi_mem_rmask,
+//   .rvfi_mem_wmask,
+//   .rvfi_mem_rdata,
+//   .rvfi_mem_wdata,
+//   .rvfi_mem_extamo,
+//   .errcode
+// );
+
 /***************************** End Instantiation *****************************/
 
 endmodule

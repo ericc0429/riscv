@@ -87,6 +87,11 @@ typedef struct packed {
     // logic [3:0] mem_byte_enable;
 } rv32i_control_word;
 
+typedef enum bit [1:0] {
+    no_stall        = 2'b00,
+    read_after_load = 2'b01,
+    mem_delay_stall = 2'b10
+} stall_debug;
 
 endpackage : rv32i_types
 

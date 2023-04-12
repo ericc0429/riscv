@@ -1,4 +1,3 @@
-
 module regfile
 (
     input clk,
@@ -28,8 +27,20 @@ end
 
 always_comb
 begin
-    reg_a = src_a ? data[src_a] : 0;
-    reg_b = src_b ? data[src_b] : 0;
+    // Create transparent Regfile by making sure that
+    // if rd is the same as the source register make them equal to
+    // the output of the regfilemux_out
+    if (dest != 0 && dest == src_a) begin
+        reg_a = in;
+    end else begin
+        reg_a = src_a ? data[src_a] : 0;
+    end
+    
+    if(dest != 0 && dest == src_b)begin
+        reg_b = in;
+    end else begin
+        reg_b = src_b ? data[src_b] : 0;
+    end
 end
 
 endmodule : regfile

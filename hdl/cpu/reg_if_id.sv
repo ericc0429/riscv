@@ -7,23 +7,26 @@ import rv32i_types::*;
     input clk,
     input rst,
     input logic load,
+
     input rv32i_word instr,
     input rv32i_word pc_in, 
 
-    // output rv32i_reg ex_mem_rd,
+    // outputs
     output logic [2:0] funct3,
     output logic [6:0] funct7,
     output rv32i_opcode opcode,
+
     output rv32i_word i_imm,
     output rv32i_word s_imm,
     output rv32i_word b_imm,
     output rv32i_word u_imm,
     output rv32i_word j_imm,
+    
     output rv32i_reg rs1,
     output rv32i_reg rs2,
     output rv32i_reg rd,
-    output rv32i_word pc_out
 
+    output rv32i_word pc_out
 );
 
 ir IR(
@@ -51,7 +54,5 @@ register PC (
     .in (pc_in),
     .out (pc_out)
 );
-
-
 
 endmodule : reg_if_id
