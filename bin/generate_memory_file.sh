@@ -4,7 +4,7 @@
 # Available options are rv32i, rv32ic, rv32im, rv32imc
 ARCH=rv32i
 # Change to 32 for Checkpoint 2 onwards. (For use with caches)
-ADDRESSABILITY=1
+ADDRESSABILITY=32
 
 # some other settings
 SH_LOCATION=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )

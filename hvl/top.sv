@@ -92,8 +92,8 @@ dcache signals:
 Please refer to tb_itf.sv for more information.
 */
 
-/* 
-assign itf.inst_read    = dut.Icache_read;
+
+/* assign itf.inst_read    = dut.Icache_read;
 assign itf.inst_addr    = dut.Icache_address;
 assign itf.inst_resp    = dut.Icache_resp;
 assign itf.inst_rdata   = dut.Icache_rdata;
@@ -104,13 +104,14 @@ assign itf.data_mbe     = dut.data_mbe;
 assign itf.data_addr    = dut.Dcache_address;
 assign itf.data_wdata   = dut.Dcache_wdata;
 assign itf.data_resp    = dut.Dcache_resp;
-assign itf.data_rdata   = dut.Dcache_rdata;
-*/
+assign itf.data_rdata   = dut.Dcache_rdata; */
+
 
 /*********************** End Shadow Memory Assignments ***********************/
 
 // Set this to the proper value
-assign itf.registers = '{default: '0};
+// assign itf.registers = '{default: '0};
+assign itf.registers = dut.datapath.regfile.data;
 
 /*********************** Instantiate your design here ************************/
 /*
@@ -126,13 +127,14 @@ Burst Memory Ports:
 Please refer to tb_itf.sv for more information.
 */
 
+
 mp4 dut(
     .clk(itf.clk),
     .rst(itf.rst),
     
     // Remove after CP1
     
-    .instr_mem_resp(itf.inst_resp),
+    /* .instr_mem_resp(itf.inst_resp),
     .instr_mem_rdata(itf.inst_rdata),
 	.data_mem_resp(itf.data_resp),
     .data_mem_rdata(itf.data_rdata),
@@ -142,17 +144,17 @@ mp4 dut(
     .data_write(itf.data_write),
     .data_mbe(itf.data_mbe),
     .data_mem_address(itf.data_addr),
-    .data_mem_wdata(itf.data_wdata)
+    .data_mem_wdata(itf.data_wdata) */
     
 
 
     // Use for CP2 onwards
-    // .pmem_read(itf.mem_read),
-    // .pmem_write(itf.mem_write),
-    // .pmem_wdata(itf.mem_wdata),
-    // .pmem_rdata(itf.mem_rdata),
-    // .pmem_address(itf.mem_addr),
-    // .pmem_resp(itf.mem_resp)
+    .pmem_read(itf.mem_read),
+    .pmem_write(itf.mem_write),
+    .pmem_wdata(itf.mem_wdata),
+    .pmem_rdata(itf.mem_rdata),
+    .pmem_address(itf.mem_addr),
+    .pmem_resp(itf.mem_resp)
    
 );
 

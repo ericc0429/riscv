@@ -31,7 +31,14 @@ import rv32i_types::*;
 
 logic service;
 
+function void set_defaults();
+    pmem_read = '0;
+    pmem_write = '0;
+endfunction
+
 always_comb begin
+    set_defaults();
+
     case (service)
         '0: begin
             pmem_read = instr_read;
@@ -48,23 +55,39 @@ always_comb begin
     pmem_write = data_write & service;
 end
 
-always_ff @(posedge clk) begin
-    if (pmem_resp && service == '0) begin
-        instr_mem_resp  <= pmem_resp;
-        instr_cacheline <= pmem_rdata;
+/* always_ff @(posedge clk) begin
+    case (service)
+        '0: begin
+            pmem_read <= instr_read;
+            // pmem_address = instr_addr;
+        end
+        
+        '1: begin
+            pmem_read <= data_read;
+        end
+    endcase
+end */
+
+always_comb/*_ff @(posedge clk) */ begin
+    instr_mem_resp = '0;
+    data_mem_resp = '0;
+
+    if (pmem_resp && (service == '0)) begin
+        instr_mem_resp  = pmem_resp;
+        instr_cacheline = pmem_rdata;
     end
 
-    else if (pmem_resp && service == '1) begin
-        data_mem_resp  <= pmem_resp;
-        data_cacheline <= pmem_rdata;
+    else if (pmem_resp && (service == '1)) begin
+        data_mem_resp  = pmem_resp;
+        data_cacheline = pmem_rdata;
     end
 end
 
-always_ff @(posedge clk) begin
+always_comb begin
     if (instr_read)
-        service <= '0;
+        service = '0;
     if (data_read || data_write) 
-        service <= '1;
+        service = '1;
 end
 
 endmodule : arbiter
