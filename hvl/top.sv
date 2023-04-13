@@ -177,7 +177,6 @@ mp4 dut(
     .rst(itf.rst),
     
     // Remove after CP1
-    
     /* .instr_mem_resp(itf.inst_resp),
     .instr_mem_rdata(itf.inst_rdata),
 	.data_mem_resp(itf.data_resp),
