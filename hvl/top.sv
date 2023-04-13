@@ -92,7 +92,6 @@ dcache signals:
 Please refer to tb_itf.sv for more information.
 */
 
-
 assign itf.inst_read    = dut.instr_read;
 assign itf.inst_addr    = dut.instr_mem_address;
 assign itf.inst_resp    = dut.instr_mem_resp;
