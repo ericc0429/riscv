@@ -1,0 +1,124 @@
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -max_paths 1
+Design : mp4
+Version: R-2020.09-SP4
+Date   : Wed Apr 12 23:34:02 2023
+****************************************
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+  Startpoint: datapath/EX_MEM/rd_out_reg[1]
+              (rising edge-triggered flip-flop clocked by my_clk)
+  Endpoint: datapath/MEM_WR/mem_rdata_out_reg[31]
+            (rising edge-triggered flip-flop clocked by my_clk)
+  Path Group: my_clk
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  mp4                5K_hvratio_1_1        NangateOpenCellLibrary
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock my_clk (rise edge)                                0.00       0.00
+  clock network delay (ideal)                             0.00       0.00
+  datapath/EX_MEM/rd_out_reg[1]/CK (DFF_X1)               0.00       0.00 r
+  datapath/EX_MEM/rd_out_reg[1]/Q (DFF_X1)                0.09       0.09 f
+  datapath/EX_MEM/rd_out[1] (reg_ex_mem)                  0.00       0.09 f
+  datapath/FWD_UNIT/rd_mem[1] (fwd_unit)                  0.00       0.09 f
+  datapath/FWD_UNIT/U28/ZN (INV_X1)                       0.05       0.14 r
+  datapath/FWD_UNIT/U47/ZN (OAI22_X1)                     0.04       0.18 f
+  datapath/FWD_UNIT/U48/ZN (AOI221_X1)                    0.09       0.26 r
+  datapath/FWD_UNIT/U49/ZN (OAI211_X1)                    0.05       0.31 f
+  datapath/FWD_UNIT/U50/ZN (AOI21_X1)                     0.15       0.46 r
+  datapath/FWD_UNIT/U51/ZN (INV_X1)                       0.04       0.50 f
+  datapath/FWD_UNIT/U52/ZN (AOI22_X1)                     0.07       0.56 r
+  datapath/FWD_UNIT/U3/Z (CLKBUF_X2)                      0.11       0.68 r
+  datapath/FWD_UNIT/rs2_fwdflag (fwd_unit)                0.00       0.68 r
+  datapath/U58/ZN (INV_X1)                                0.05       0.73 f
+  datapath/U59/ZN (NOR2_X1)                               0.16       0.89 r
+  datapath/U60/Z (CLKBUF_X1)                              0.18       1.07 r
+  datapath/U61/ZN (AOI22_X1)                              0.07       1.14 f
+  datapath/U68/ZN (NAND3_X1)                              0.13       1.27 r
+  datapath/ALU/b[2] (alu_0)                               0.00       1.27 r
+  datapath/ALU/U5/ZN (INV_X1)                             0.10       1.37 f
+  datapath/ALU/U37/ZN (INV_X1)                            0.14       1.51 r
+  datapath/ALU/U643/Z (XOR2_X1)                           0.07       1.57 f
+  datapath/ALU/DP_OP_20J5_122_1583/U31/CO (FA_X1)         0.11       1.68 f
+  datapath/ALU/DP_OP_20J5_122_1583/U30/CO (FA_X1)         0.09       1.78 f
+  datapath/ALU/DP_OP_20J5_122_1583/U29/CO (FA_X1)         0.09       1.87 f
+  datapath/ALU/DP_OP_20J5_122_1583/U28/CO (FA_X1)         0.09       1.96 f
+  datapath/ALU/DP_OP_20J5_122_1583/U27/CO (FA_X1)         0.09       2.05 f
+  datapath/ALU/DP_OP_20J5_122_1583/U26/CO (FA_X1)         0.09       2.14 f
+  datapath/ALU/DP_OP_20J5_122_1583/U25/CO (FA_X1)         0.09       2.23 f
+  datapath/ALU/DP_OP_20J5_122_1583/U24/CO (FA_X1)         0.09       2.32 f
+  datapath/ALU/DP_OP_20J5_122_1583/U23/CO (FA_X1)         0.09       2.41 f
+  datapath/ALU/DP_OP_20J5_122_1583/U22/CO (FA_X1)         0.09       2.50 f
+  datapath/ALU/DP_OP_20J5_122_1583/U21/CO (FA_X1)         0.09       2.59 f
+  datapath/ALU/DP_OP_20J5_122_1583/U20/CO (FA_X1)         0.09       2.68 f
+  datapath/ALU/DP_OP_20J5_122_1583/U19/CO (FA_X1)         0.09       2.77 f
+  datapath/ALU/DP_OP_20J5_122_1583/U18/CO (FA_X1)         0.09       2.86 f
+  datapath/ALU/DP_OP_20J5_122_1583/U17/CO (FA_X1)         0.09       2.95 f
+  datapath/ALU/DP_OP_20J5_122_1583/U16/CO (FA_X1)         0.09       3.04 f
+  datapath/ALU/DP_OP_20J5_122_1583/U15/CO (FA_X1)         0.09       3.13 f
+  datapath/ALU/DP_OP_20J5_122_1583/U14/CO (FA_X1)         0.09       3.23 f
+  datapath/ALU/DP_OP_20J5_122_1583/U13/CO (FA_X1)         0.09       3.32 f
+  datapath/ALU/DP_OP_20J5_122_1583/U12/CO (FA_X1)         0.09       3.41 f
+  datapath/ALU/DP_OP_20J5_122_1583/U11/CO (FA_X1)         0.09       3.50 f
+  datapath/ALU/DP_OP_20J5_122_1583/U10/CO (FA_X1)         0.09       3.59 f
+  datapath/ALU/DP_OP_20J5_122_1583/U9/CO (FA_X1)          0.09       3.68 f
+  datapath/ALU/DP_OP_20J5_122_1583/U8/CO (FA_X1)          0.09       3.77 f
+  datapath/ALU/DP_OP_20J5_122_1583/U7/CO (FA_X1)          0.09       3.86 f
+  datapath/ALU/DP_OP_20J5_122_1583/U6/CO (FA_X1)          0.09       3.95 f
+  datapath/ALU/DP_OP_20J5_122_1583/U5/CO (FA_X1)          0.09       4.04 f
+  datapath/ALU/DP_OP_20J5_122_1583/U4/CO (FA_X1)          0.09       4.13 f
+  datapath/ALU/DP_OP_20J5_122_1583/U3/CO (FA_X1)          0.09       4.22 f
+  datapath/ALU/U611/Z (XOR2_X1)                           0.07       4.29 f
+  datapath/ALU/U612/ZN (AND2_X1)                          0.04       4.32 f
+  datapath/ALU/U613/ZN (OR2_X1)                           0.06       4.39 f
+  datapath/ALU/f[31] (alu_0)                              0.00       4.39 f
+  datapath/U750/ZN (AOI22_X1)                             0.05       4.44 r
+  datapath/U768/ZN (NAND4_X1)                             0.08       4.52 f
+  datapath/U784/ZN (AOI22_X1)                             0.07       4.60 r
+  datapath/U785/ZN (OAI211_X1)                            0.04       4.64 f
+  datapath/data_mem_wdata[31] (datapath)                  0.00       4.64 f
+  Dcache/mem_wdata_cpu[31] (cache_0)                      0.00       4.64 f
+  Dcache/bus/mem_wdata[31] (line_adapter_0)               0.00       4.64 f
+  Dcache/bus/mem_wdata_line[31] (line_adapter_0)          0.00       4.64 f
+  Dcache/datapath/mem_wdata[31] (cache_datapath_0)        0.00       4.64 f
+  Dcache/datapath/U278/ZN (NAND2_X1)                      0.07       4.71 r
+  Dcache/datapath/U347/ZN (NAND2_X1)                      0.04       4.75 f
+  Dcache/datapath/DM_cache/datain[63] (data_array_0)      0.00       4.75 f
+  Dcache/datapath/DM_cache/U1847/Z (MUX2_X1)              0.07       4.82 f
+  Dcache/datapath/DM_cache/dataout[63] (data_array_0)     0.00       4.82 f
+  Dcache/datapath/mem_rdata[63] (cache_datapath_0)        0.00       4.82 f
+  Dcache/bus/mem_rdata_line[63] (line_adapter_0)          0.00       4.82 f
+  Dcache/bus/U190/ZN (AOI22_X1)                           0.06       4.89 r
+  Dcache/bus/U192/ZN (NAND4_X1)                           0.04       4.93 f
+  Dcache/bus/mem_rdata[31] (line_adapter_0)               0.00       4.93 f
+  Dcache/mem_rdata_cpu[31] (cache_0)                      0.00       4.93 f
+  datapath/data_mem_rdata[31] (datapath)                  0.00       4.93 f
+  datapath/MEM_WR/mem_rdata[31] (reg_mem_wr)              0.00       4.93 f
+  datapath/MEM_WR/U38/ZN (AND2_X1)                        0.04       4.97 f
+  datapath/MEM_WR/mem_rdata_out_reg[31]/D (DFF_X1)        0.01       4.98 f
+  data arrival time                                                  4.98
+
+  clock my_clk (rise edge)                               10.00      10.00
+  clock network delay (ideal)                             0.00      10.00
+  clock uncertainty                                      -0.10       9.90
+  datapath/MEM_WR/mem_rdata_out_reg[31]/CK (DFF_X1)       0.00       9.90 r
+  library setup time                                     -0.04       9.86
+  data required time                                                 9.86
+  --------------------------------------------------------------------------
+  data required time                                                 9.86
+  data arrival time                                                 -4.98
+  --------------------------------------------------------------------------
+  slack (MET)                                                        4.88
+
+
+1
