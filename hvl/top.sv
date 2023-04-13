@@ -26,7 +26,7 @@ end
 
 /***************************** Spike Log Printer *****************************/
 // Can be enabled for debugging
-//spike_log_printer printer(.itf(itf), .rvfi(rvfi));
+spike_log_printer printer(.itf(itf), .rvfi(rvfi));
 /*************************** End Spike Log Printer ***************************/
 
 
@@ -93,18 +93,18 @@ Please refer to tb_itf.sv for more information.
 */
 
 
-/* assign itf.inst_read    = dut.Icache_read;
-assign itf.inst_addr    = dut.Icache_address;
-assign itf.inst_resp    = dut.Icache_resp;
-assign itf.inst_rdata   = dut.Icache_rdata;
+assign itf.inst_read    = dut.instr_read;
+assign itf.inst_addr    = dut.instr_mem_address;
+assign itf.inst_resp    = dut.instr_mem_resp;
+assign itf.inst_rdata   = dut.instr_mem_rdata;
 
-assign itf.data_read    = dut.Dcache_read;
-assign itf.data_write   = dut.Dcache_write;
+assign itf.data_read    = dut.data_read;
+assign itf.data_write   = dut.data_write;
 assign itf.data_mbe     = dut.data_mbe;
-assign itf.data_addr    = dut.Dcache_address;
-assign itf.data_wdata   = dut.Dcache_wdata;
-assign itf.data_resp    = dut.Dcache_resp;
-assign itf.data_rdata   = dut.Dcache_rdata; */
+assign itf.data_addr    = dut.data_mem_address;
+assign itf.data_wdata   = dut.data_mem_wdata;
+assign itf.data_resp    = dut.data_mem_resp;
+assign itf.data_rdata   = dut.data_mem_rdata;
 
 
 /*********************** End Shadow Memory Assignments ***********************/
