@@ -142,6 +142,14 @@ assign itf.inst_addr    = dut.instr_mem_address;
 assign itf.inst_resp    = dut.instr_mem_resp;
 assign itf.inst_rdata   = dut.instr_mem_rdata;
 
+<<<<<<< HEAD
+=======
+assign itf.inst_read    = dut.instr_read;
+assign itf.inst_addr    = dut.instr_mem_address;
+assign itf.inst_resp    = dut.instr_mem_resp;
+assign itf.inst_rdata   = dut.instr_mem_rdata;
+
+>>>>>>> 5411b50 (fixed shadow mem linkage)
 assign itf.data_read    = dut.data_read;
 assign itf.data_write   = dut.data_write;
 assign itf.data_mbe     = dut.data_mbe;
