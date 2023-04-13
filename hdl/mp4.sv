@@ -88,6 +88,8 @@ logic pmem_c_resp;
 datapath datapath(.*);
 
 cache    Icache( // Instruction 
+    .clk,
+    .rst,
     /* Physical memory signals */
     // inputs
     .pmem_resp(Icache_resp),
@@ -113,6 +115,8 @@ cache    Icache( // Instruction
 );
 
 cache    Dcache( // Data
+    .clk,
+    .rst,
     /* Physical memory signals */
     // inputs
     .pmem_resp(Dcache_resp),
