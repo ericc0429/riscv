@@ -11,8 +11,9 @@ import rv32i_types::*;
     input rv32i_control_word ctrl_word,
     input rv32i_word pc,
 
-    input rv32i_reg rs1,
-    input rv32i_reg rs2,
+    input rv32i_reg rs1_addr,
+    input rv32i_reg rs2_addr,
+
     input rv32i_reg rd,
 
     input rv32i_word rs1_data,
@@ -69,8 +70,8 @@ begin
         ctrl_word_out <= ctrl_word;
         pc_out <= pc;
 
-        rs1_out <= rs1;
-        rs2_out <= rs2;
+        rs1_out <= rs1_addr;
+        rs2_out <= rs2_addr;
         rd_out <= rd;
 
         rs1_data_out <= rs1_data;

@@ -2,8 +2,9 @@ module hazard_detection_unit
 import rv32i_types::*;
 (
     input rv32i_control_word ctrl_ex,
-    input rv32i_reg rs1,
-    input rv32i_reg rs2,
+    input rv32i_reg rs1_addr,
+    input rv32i_reg rs2_addr,
+
     input rv32i_reg rd_ex,
     input logic stall_pipeline,
     output logic ctrlmux_sel,
@@ -12,9 +13,10 @@ import rv32i_types::*;
     output logic load_ex_mem,
     output logic load_mem_wr,
     output logic load_pc,
-
+    output logic cur_stall,
     output stall_debug sd   // Stall debug
 );
+
 
 function void set_defaults();
     ctrlmux_sel = '0;
@@ -24,6 +26,7 @@ function void set_defaults();
     load_mem_wr = '1;
     load_pc = '1;
     sd = no_stall;
+    cur_stall = '0;
 endfunction
 
 function void stall(); // Read after load stall
@@ -40,13 +43,14 @@ function void mem_stall ();
     load_ex_mem = '0;
     load_mem_wr = '0;
     sd = mem_delay_stall;
+    cur_stall = '1;
 endfunction
 
 always_comb
 begin
     set_defaults();
     
-    if((rd_ex != '0) && ((rd_ex == rs1) || (rd_ex == rs2)) && (ctrl_ex.opcode == op_load))
+    if((rd_ex != '0) && ((rd_ex == rs1_addr) || (rd_ex == rs2_addr)) && (ctrl_ex.opcode == op_load))
     begin
         stall();
     end

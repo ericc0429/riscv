@@ -1,4 +1,5 @@
 module mp4_tb;
+import rv32i_types::*;
 `timescale 1ns/10ps
 
 /********************* Do not touch for proper compilation *******************/
@@ -33,38 +34,82 @@ spike_log_printer printer(.itf(itf), .rvfi(rvfi));
 /************************ Signals necessary for monitor **********************/
 // This section not required until CP2
 
-assign rvfi.commit = 0; // Set high when a valid instruction is modifying regfile or PC
-assign rvfi.halt = 0; // Set high when target PC == Current PC for a branch
+assign rvfi.commit = ((dut.datapath.ctrl_wr.valid) && ~dut.datapath.cur_stall_wr); // Set high when a valid instruction is modifying regfile or PC
+assign rvfi.halt = (rvfi.commit && (rvfi.pc_rdata == rvfi.pc_wdata)); // Set high when target PC == Current PC for a branch
 initial rvfi.order = 0;
 always @(posedge itf.clk iff rvfi.commit) rvfi.order <= rvfi.order + 1; // Modify for OoO
 
-/*
-Instruction and trap:
-    rvfi.inst
-    rvfi.trap
+assign rvfi.clk = itf.clk;
+assign rvfi.rst = itf.rst;
 
-Regfile:
-    rvfi.rs1_addr
-    rvfi.rs2_addr
-    rvfi.rs1_rdata
-    rvfi.rs2_rdata
-    rvfi.load_regfile
-    rvfi.rd_addr
-    rvfi.rd_wdata
+function void set_defaults();
+    // Instruction and trap:
+    rvfi.inst = dut.datapath.ctrl_wr.instr;
+    rvfi.trap = dut.datapath.trap_wr;
 
-PC:
-    rvfi.pc_rdata
-    rvfi.pc_wdata
+    // Regfile:
+    rvfi.rs1_addr = dut.datapath.rs1_addr_wr;
+    rvfi.rs2_addr = dut.datapath.rs2_addr_wr;
+    rvfi.rs1_rdata = dut.datapath.rs1_data_wr;
+    rvfi.rs2_rdata = dut.datapath.rs2_data_wr;
 
-Memory:
-    rvfi.mem_addr
-    rvfi.mem_rmask
-    rvfi.mem_wmask
-    rvfi.mem_rdata
-    rvfi.mem_wdata
+    rvfi.load_regfile = dut.datapath.ctrl_wr.load_regfile;
+    rvfi.rd_addr = dut.datapath.rd_wr;
+    rvfi.rd_wdata = dut.datapath.regfilemux_out;
 
-Please refer to rvfi_itf.sv for more information.
-*/
+    // PC:
+    rvfi.pc_rdata = dut.datapath.ctrl_wr.pc;
+    rvfi.pc_wdata = dut.datapath.pc_wr;
+
+    // Memory:
+    rvfi.mem_addr = dut.datapath.alu_out_wr;
+    rvfi.mem_rmask = dut.datapath.rmask_wr;
+    rvfi.mem_wmask = dut.datapath.wmask_wr;
+    rvfi.mem_rdata = dut.datapath.rdata_wr;
+    rvfi.mem_wdata = dut.datapath.wdata_wr; 
+
+endfunction
+
+// Set signals that could possible be used in some instructions
+// i.e. rs2_addr
+always_comb begin
+
+    set_defaults();
+
+    case(dut.datapath.ctrl_wr.opcode)
+        
+        op_reg, op_store, op_br: ;
+
+        op_lui, op_auipc, op_jal: begin
+            rvfi.rs1_addr = '0;
+            rvfi.rs2_addr = '0;
+            rvfi.rs1_rdata = 32'd0;
+            rvfi.rs2_rdata = 32'd0;
+        end 
+        
+        op_jalr, op_imm, op_load: begin
+            rvfi.rs2_addr = '0;
+            rvfi.rs2_rdata = 32'd0;
+        end
+    endcase
+
+    if(!dut.datapath.ctrl_wr.mem_read)begin
+        rvfi.mem_rmask = 4'h0;
+    end
+    if(!dut.datapath.ctrl_wr.mem_write)begin
+        rvfi.mem_wmask = 4'h0;
+    end
+
+    if(dut.datapath.rd_wr == '0)begin
+        rvfi.rd_wdata = 32'd0;
+    end
+
+end
+
+
+
+// Please refer to rvfi_itf.sv for more information.
+
 
 /**************************** End RVFIMON signals ****************************/
 
@@ -75,19 +120,19 @@ Please refer to rvfi_itf.sv for more information.
 /*
 The following signals need to be set:
 icache signals:
-    itf.inst_read
-    itf.inst_addr
-    itf.inst_resp
-    itf.inst_rdata
+assign itf.inst_read
+assign itf.inst_addr
+assign itf.inst_resp
+assign itf.inst_rdata
 
 dcache signals:
-    itf.data_read
-    itf.data_write
-    itf.data_mbe
-    itf.data_addr
-    itf.data_wdata
-    itf.data_resp
-    itf.data_rdata
+assign itf.data_read
+assign itf.data_write
+assign itf.data_mbe
+assign itf.data_addr
+assign itf.data_wdata
+assign itf.data_resp
+assign itf.data_rdata
 
 Please refer to tb_itf.sv for more information.
 */
@@ -105,7 +150,6 @@ assign itf.data_wdata   = dut.data_mem_wdata;
 assign itf.data_resp    = dut.data_mem_resp;
 assign itf.data_rdata   = dut.data_mem_rdata;
 
-
 /*********************** End Shadow Memory Assignments ***********************/
 
 // Set this to the proper value
@@ -113,6 +157,7 @@ assign itf.data_rdata   = dut.data_mem_rdata;
 assign itf.registers = dut.datapath.regfile.data;
 
 /*********************** Instantiate your design here ************************/
+
 /*
 The following signals need to be connected to your top level for CP2:
 Burst Memory Ports:
@@ -145,8 +190,6 @@ mp4 dut(
     .data_mem_address(itf.data_addr),
     .data_mem_wdata(itf.data_wdata) */
     
-
-
     // Use for CP2 onwards
     .pmem_read(itf.mem_read),
     .pmem_write(itf.mem_write),
@@ -156,33 +199,6 @@ mp4 dut(
     .pmem_resp(itf.mem_resp)
    
 );
-
-// riscv_formal_monitor_rv32imc monitor (
-//   .clock,
-//   .reset,
-//   .rvfi_valid,
-//   .rvfi_order,
-//   .rvfi_insn,
-//   .rvfi_trap,
-//   .rvfi_halt,
-//   .rvfi_intr,
-//   .rvfi_mode,
-//   .rvfi_rs1_addr,
-//   .rvfi_rs2_addr,
-//   .rvfi_rs1_rdata,
-//   .rvfi_rs2_rdata,
-//   .rvfi_rd_addr,
-//   .rvfi_rd_wdata,
-//   .rvfi_pc_rdata,
-//   .rvfi_pc_wdata,
-//   .rvfi_mem_addr,
-//   .rvfi_mem_rmask,
-//   .rvfi_mem_wmask,
-//   .rvfi_mem_rdata,
-//   .rvfi_mem_wdata,
-//   .rvfi_mem_extamo,
-//   .errcode
-// );
 
 /***************************** End Instantiation *****************************/
 

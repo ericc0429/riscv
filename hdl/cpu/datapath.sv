@@ -28,6 +28,18 @@ import rv32i_types::*;
 
 /* ================ INTERNAL SIGNALS ================ */
 
+/* === MASKS AND TRAP === */
+logic [3:0] wmask_wr;
+
+logic [3:0] rmask_mem;
+logic [3:0] rmask_wr;
+
+logic trap_mem;
+logic trap_wr;
+
+/* === INSTR SIGNALS === */
+rv32i_word instr_id;
+
 /* === Stage Register Loads === */
 logic load_if_id;
 logic load_id_ex;
@@ -35,6 +47,10 @@ logic load_ex_mem;
 logic load_mem_wr;
 
 stall_debug sd; // Debug stalling
+
+logic cur_stall;
+logic cur_stall_mem;
+logic cur_stall_wr;
 
 // assign load_ex_mem = 1'b1;
 // assign load_mem_wr = 1'b1;
@@ -49,14 +65,20 @@ rv32i_word pc_ex;
 rv32i_word pc_mem;
 rv32i_word pc_wr;
 
+rv32i_word pc_wdata_ex;
+
 /* === regfile signals === */
 rv32i_word regfilemux_out;
 
 // register indexes
-rv32i_reg rs1;
-rv32i_reg rs2;
-rv32i_reg rs1_ex;
-rv32i_reg rs2_ex;
+rv32i_reg rs1_addr;
+rv32i_reg rs2_addr;
+rv32i_reg rs1_addr_ex;
+rv32i_reg rs2_addr_ex;
+rv32i_reg rs1_addr_mem;
+rv32i_reg rs2_addr_mem;
+rv32i_reg rs1_addr_wr;
+rv32i_reg rs2_addr_wr;
 
 rv32i_reg rd_id;
 rv32i_reg rd_ex;
@@ -68,6 +90,10 @@ rv32i_word rs1_data;
 rv32i_word rs2_data;
 rv32i_word rs1_data_ex;
 rv32i_word rs2_data_ex;
+rv32i_word rs1_data_mem;
+rv32i_word rs2_data_mem;
+rv32i_word rs1_data_wr;
+rv32i_word rs2_data_wr;
 rv32i_word rs1_data_final;      // either chose fwd val or curr reg val
 rv32i_word rs2_data_final;
 
@@ -144,6 +170,7 @@ logic [1:0] bit_shift_mem;
 logic [1:0] bit_shift_wr;
 
 rv32i_word wdata_out;
+rv32i_word wdata_wr;
 
 assign instr_read = '1;     // just cp1 (always fetching)
 assign data_read = ctrl_mem.mem_read;
@@ -165,8 +192,8 @@ regfile regfile (
     .rst,
     .load   (ctrl_wr.load_regfile),
     .in     (regfilemux_out),
-    .src_a  (rs1),
-    .src_b  (rs2),
+    .src_a  (rs1_addr),
+    .src_b  (rs2_addr),
     .dest   (rd_wr),
     .reg_a  (rs1_data),
     .reg_b  (rs2_data)
@@ -207,6 +234,7 @@ reg_if_id IF_ID (
     .load   (load_if_id),
 
     .instr  (instr_mem_rdata),
+    .instr_out (instr_id),
     .pc_in  (pc_if),
 
     // outputs
@@ -216,8 +244,8 @@ reg_if_id IF_ID (
  
     .pc_out (pc_id),
     
-    .rs1,
-    .rs2,
+    .rs1_addr,
+    .rs2_addr,
     .rd     (rd_id),
     
     .i_imm,
@@ -235,8 +263,9 @@ reg_id_ex ID_EX (
     .ctrl_word  (ctrl_id),
     .pc         (pc_id),
 
-    .rs1,                       // reg indexes
-    .rs2,
+    .rs1_addr,                       // reg indexes
+    .rs2_addr,
+
     .rd         (rd_id),
 
     .rs1_data,                  // reg data
@@ -252,8 +281,8 @@ reg_id_ex ID_EX (
     .ctrl_word_out  (ctrl_ex),
     .pc_out         (pc_ex),
 
-    .rs1_out        (rs1_ex),
-    .rs2_out        (rs2_ex),
+    .rs1_out        (rs1_addr_ex),
+    .rs2_out        (rs2_addr_ex),
     .rd_out         (rd_ex),
 
     .rs1_data_out   (rs1_data_ex),
@@ -271,9 +300,23 @@ reg_ex_mem EX_MEM (
     .rst,
     .load           (load_ex_mem),
 
+    .rs1_addr       (rs1_addr_ex),
+    .rs2_addr       (rs2_addr_ex),  
+    .rs1_addr_out   (rs1_addr_mem),
+    .rs2_addr_out   (rs2_addr_mem),   
+
+    .rs1_data       (rs1_data_ex),
+    .rs2_data       (rs2_data_ex),
+    .rs1_data_out   (rs1_data_mem),
+    .rs2_data_out   (rs2_data_mem),
+
+
     .ctrl_word      (ctrl_ex),
-    .pc             (alu_out),
+    .pc             (pc_wdata_ex),
     .br_en,
+
+    .cur_stall_in   (cur_stall),
+    .cur_stall_out  (cur_stall_mem),
 
     .rd             (rd_ex),
 
@@ -294,7 +337,9 @@ reg_ex_mem EX_MEM (
     .mem_byte_enable(data_mbe),
 
     .write_data_out (wdata_out),
-    .u_imm_out      (u_imm_mem)
+    .u_imm_out      (u_imm_mem),
+    .rmask_out      (rmask_mem),
+    .trap_out       (trap_mem)
 );
 
 reg_mem_wr MEM_WR (
@@ -306,13 +351,37 @@ reg_mem_wr MEM_WR (
     .pc             (pc_mem),
     .br_en          (br_en_mem),
 
+    .rs1_addr       (rs1_addr_mem),
+    .rs2_addr       (rs2_addr_mem),  
+    .rs1_addr_out   (rs1_addr_wr),
+    .rs2_addr_out   (rs2_addr_wr),   
+
+    .rs1_data       (rs1_data_mem),
+    .rs2_data       (rs2_data_mem),
+    .rs1_data_out   (rs1_data_wr),
+    .rs2_data_out   (rs2_data_wr),
+
+    .wmask_in       (data_mbe),
+    .wmask_out      (wmask_wr),
+
+    .rmask_in       (rmask_mem),
+    .rmask_out      (rmask_wr),
+
+    .trap_in        (trap_mem),
+    .trap_out       (trap_wr),
+
     .rd             (rd_mem),
     
+    .cur_stall_in  (cur_stall_mem),
+    .cur_stall_out   (cur_stall_wr),
+
     .mem_rdata      (data_mem_rdata),
     .alu_res        (alu_out_mem),
     .bit_shift      (bit_shift_mem),
 
     .u_imm          (u_imm_mem),
+
+    .write_data     (wdata_out),
 
     // outputs
     .ctrl_word_out  (ctrl_wr),
@@ -325,7 +394,9 @@ reg_mem_wr MEM_WR (
     .alu_res_out    (alu_out_wr),
     .bit_shift_out  (bit_shift_wr),
 
-    .u_imm_out      (u_imm_wr)
+    .u_imm_out      (u_imm_wr),
+
+    .write_data_out (wdata_wr)
 );
 
 /* ================ FORWARDING UNIT ================ */
@@ -333,8 +404,8 @@ fwd_unit FWD_UNIT (
     // inputs
     .rd_wr,
     .rd_mem,
-    .rs1             (rs1_ex),
-    .rs2             (rs2_ex),
+    .rs1             (rs1_addr_ex),
+    .rs2             (rs2_addr_ex),
 
     .rdata_wr,
     .alu_out_mem,     // alu output being propagated
@@ -364,8 +435,8 @@ assign stall_pipeline = instr_stall || data_stall;
 /* ================ HAZARD DETECTION UNIT ================ */
 hazard_detection_unit HDU (
     .ctrl_ex,
-    .rs1,
-    .rs2,
+    .rs1_addr,
+    .rs2_addr,
     .stall_pipeline,
     .rd_ex,
     .ctrlmux_sel,
@@ -374,6 +445,7 @@ hazard_detection_unit HDU (
     .load_ex_mem,
     .load_mem_wr,
     .load_pc,
+    .cur_stall,
 
     .sd
 );
@@ -418,8 +490,14 @@ always_comb begin : MUXES
 
     // PC MUX
     unique case (pc_sel)
-        1'b0: pcmux_out = alupc_out;
-        1'b1: pcmux_out = alu_out;
+        1'b0: begin
+            pcmux_out = alupc_out;
+            pc_wdata_ex = ctrl_ex.pc+4;
+        end
+        1'b1: begin
+            pcmux_out = alu_out;
+            pc_wdata_ex = alu_out;
+        end
         default: pcmux_out = alupc_out;
     endcase
 

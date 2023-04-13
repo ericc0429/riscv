@@ -57,7 +57,6 @@ logic Dcache_read;
 logic Dcache_write;
 logic Dcache_resp;
 
-
 // CPU --> Caches
 // Instruction 
 logic instr_mem_resp;
@@ -82,10 +81,10 @@ logic pmem_c_read;
 logic pmem_c_write;
 logic pmem_c_resp;
 
-
 /* ================ TOP-LEVEL BLOCKS ================ */
 
 datapath datapath(.*);
+
 
 cache    Icache( // Instruction 
     .clk,

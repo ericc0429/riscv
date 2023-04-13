@@ -85,6 +85,9 @@ typedef struct packed {
     logic mem_read;
     logic br_sel;
     // logic [3:0] mem_byte_enable;
+    rv32i_word instr;
+    rv32i_word pc;
+    logic valid;
 } rv32i_control_word;
 
 typedef enum bit [1:0] {

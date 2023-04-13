@@ -3,6 +3,7 @@
 
 `define MAGIC_MEM 0
 `define PARAM_MEM 1
+
 // `define MEMORY `MAGIC_MEM
 `define MEMORY `PARAM_MEM
 
