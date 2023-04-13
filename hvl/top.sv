@@ -142,14 +142,6 @@ assign itf.inst_addr    = dut.instr_mem_address;
 assign itf.inst_resp    = dut.instr_mem_resp;
 assign itf.inst_rdata   = dut.instr_mem_rdata;
 
-<<<<<<< HEAD
-=======
-assign itf.inst_read    = dut.instr_read;
-assign itf.inst_addr    = dut.instr_mem_address;
-assign itf.inst_resp    = dut.instr_mem_resp;
-assign itf.inst_rdata   = dut.instr_mem_rdata;
-
->>>>>>> 5411b50 (fixed shadow mem linkage)
 assign itf.data_read    = dut.data_read;
 assign itf.data_write   = dut.data_write;
 assign itf.data_mbe     = dut.data_mbe;
@@ -196,7 +188,7 @@ mp4 dut(
     .data_mbe(itf.data_mbe),
     .data_mem_address(itf.data_addr),
     .data_mem_wdata(itf.data_wdata) */
-
+    
     // Use for CP2 onwards
     .pmem_read(itf.mem_read),
     .pmem_write(itf.mem_write),
