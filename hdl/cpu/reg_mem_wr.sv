@@ -16,6 +16,9 @@ import rv32i_types::*;
     input rv32i_reg rs2_addr,
     input rv32i_reg rd,
 
+    // input rv32i_word addr_aligned_in,
+    // output rv32i_word addr_aligned_out,
+
     input logic cur_stall_in,
 
     input rv32i_word rs1_data,
@@ -73,6 +76,8 @@ begin
         rd_out <= '0;
         cur_stall_out <= '0;
 
+        // addr_aligned_out <= '0;
+
         rs1_data_out <= '0;
         rs2_data_out <= '0;
 
@@ -100,6 +105,8 @@ begin
         rd_out <= rd;
         cur_stall_out <= cur_stall_in;
 
+        // addr_aligned_out <= addr_aligned_in;
+
         rs1_data_out <= rs1_data;
         rs2_data_out <= rs2_data;
 
@@ -125,6 +132,8 @@ begin
         rs1_addr_out <= rs1_addr_out;
         rs2_addr_out <= rs2_addr_out;
         rd_out <= rd_out;
+
+        // addr_aligned_out <= addr_aligned_out;
 
         cur_stall_out <= cur_stall_out;
 

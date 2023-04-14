@@ -34,7 +34,7 @@ spike_log_printer printer(.itf(itf), .rvfi(rvfi));
 /************************ Signals necessary for monitor **********************/
 // This section not required until CP2
 
-assign rvfi.commit = ((dut.datapath.ctrl_wr.valid) && ~dut.datapath.cur_stall_wr); // Set high when a valid instruction is modifying regfile or PC
+assign rvfi.commit = ((dut.datapath.ctrl_wr.valid) && !dut.datapath.cur_stall); // Set high when a valid instruction is modifying regfile or PC
 assign rvfi.halt = (rvfi.commit && (rvfi.pc_rdata == rvfi.pc_wdata)); // Set high when target PC == Current PC for a branch
 initial rvfi.order = 0;
 always @(posedge itf.clk iff rvfi.commit) rvfi.order <= rvfi.order + 1; // Modify for OoO
@@ -59,7 +59,7 @@ function void set_defaults();
 
     // PC:
     rvfi.pc_rdata = dut.datapath.ctrl_wr.pc;
-    rvfi.pc_wdata = dut.datapath.pc_wr;
+    rvfi.pc_wdata = dut.datapath.pc_wdata_wr;
 
     // Memory:
     rvfi.mem_addr = dut.datapath.alu_out_wr;

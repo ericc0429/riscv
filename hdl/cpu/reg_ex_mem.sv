@@ -15,7 +15,6 @@ import rv32i_types::*;
     input rv32i_reg rs1_addr,
     input rv32i_reg rs2_addr,
     input rv32i_reg rd,
-    input logic cur_stall_in,
 
     input rv32i_word rs1_data,
     input rv32i_word rs2_data,
@@ -32,7 +31,6 @@ import rv32i_types::*;
     output rv32i_reg rs1_addr_out,
     output rv32i_reg rs2_addr_out,
     output rv32i_reg rd_out,
-    output logic cur_stall_out,
 
     output rv32i_word rs1_data_out,
     output rv32i_word rs2_data_out,
@@ -116,7 +114,6 @@ begin
         rs1_addr_out <= '0;
         rs2_addr_out <= '0;
         rd_out <= '0;
-        cur_stall_out <= '0;
 
         rs1_data_out <= '0;
         rs2_data_out <= '0;
@@ -142,8 +139,6 @@ begin
         rs2_addr_out <= rs2_addr;
         rd_out <= rd;
         
-        cur_stall_out <= cur_stall_in;
-
         rs1_data_out <= rs1_data;
         rs2_data_out <= rs2_data;
 
@@ -151,7 +146,7 @@ begin
         alu_res_out <= alu_res;
         bit_shift <= addr[1:0];
         mem_byte_enable <= wmask;
-        rmask_out <= wmask;
+        rmask_out <= rmask;
         trap_out <= trap;
 
         write_data_out <= write_data;
@@ -168,7 +163,6 @@ begin
         rs2_addr_out <= rs2_addr_out;
         rd_out <= rd_out;
 
-        cur_stall_out <= cur_stall_out;
 
         rs1_data_out <= rs1_data_out;
         rs2_data_out <= rs2_data_out;

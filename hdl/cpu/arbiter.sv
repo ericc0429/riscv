@@ -70,7 +70,7 @@ always_comb begin
     end
 end
 
-always_comb begin
+always_comb /* ff @(posedge clk) */ begin
     if (instr_read)
         service = '0;
     if (data_read || data_write) 

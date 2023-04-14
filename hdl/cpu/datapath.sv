@@ -28,6 +28,8 @@ import rv32i_types::*;
 
 /* ================ INTERNAL SIGNALS ================ */
 
+// rv32i_word  addr_aligned_wr;
+
 /* === MASKS AND TRAP === */
 logic [3:0] wmask_wr;
 
@@ -49,7 +51,6 @@ logic load_mem_wr;
 stall_debug sd; // Debug stalling
 
 logic cur_stall;
-logic cur_stall_mem;
 logic cur_stall_wr;
 
 // assign load_ex_mem = 1'b1;
@@ -62,8 +63,8 @@ rv32i_word pcmux_out;
 rv32i_word pc_if;
 rv32i_word pc_id;
 rv32i_word pc_ex;
-rv32i_word pc_mem;
-rv32i_word pc_wr;
+rv32i_word pc_wdata_mem;
+rv32i_word pc_wdata_wr;
 
 rv32i_word pc_wdata_ex;
 
@@ -305,8 +306,8 @@ reg_ex_mem EX_MEM (
     .rs1_addr_out   (rs1_addr_mem),
     .rs2_addr_out   (rs2_addr_mem),   
 
-    .rs1_data       (rs1_data_ex),
-    .rs2_data       (rs2_data_ex),
+    .rs1_data       (rs1_data_final),
+    .rs2_data       (rs2_data_final),
     .rs1_data_out   (rs1_data_mem),
     .rs2_data_out   (rs2_data_mem),
 
@@ -314,9 +315,6 @@ reg_ex_mem EX_MEM (
     .ctrl_word      (ctrl_ex),
     .pc             (pc_wdata_ex),
     .br_en,
-
-    .cur_stall_in   (cur_stall),
-    .cur_stall_out  (cur_stall_mem),
 
     .rd             (rd_ex),
 
@@ -326,7 +324,7 @@ reg_ex_mem EX_MEM (
 
     // outputs
     .ctrl_word_out  (ctrl_mem),
-    .pc_out         (pc_mem),
+    .pc_out         (pc_wdata_mem),
     .br_en_out      (br_en_mem),
 
     .rd_out         (rd_mem),
@@ -348,8 +346,10 @@ reg_mem_wr MEM_WR (
     .load           (load_mem_wr),
 
     .ctrl_word      (ctrl_mem),
-    .pc             (pc_mem),
+    .pc             (pc_wdata_mem),
     .br_en          (br_en_mem),
+    // .addr_aligned_in (data_mem_address),
+    // .addr_aligned_out (addr_aligned_wr),
 
     .rs1_addr       (rs1_addr_mem),
     .rs2_addr       (rs2_addr_mem),  
@@ -372,7 +372,7 @@ reg_mem_wr MEM_WR (
 
     .rd             (rd_mem),
     
-    .cur_stall_in  (cur_stall_mem),
+    .cur_stall_in  (cur_stall),
     .cur_stall_out   (cur_stall_wr),
 
     .mem_rdata      (data_mem_rdata),
@@ -385,7 +385,7 @@ reg_mem_wr MEM_WR (
 
     // outputs
     .ctrl_word_out  (ctrl_wr),
-    .pc_out         (pc_wr),
+    .pc_out         (pc_wdata_wr),
     .br_en_out      (br_en_wr),
 
     .rd_out         (rd_wr),
@@ -526,7 +526,7 @@ always_comb begin : MUXES
         regfilemux::u_imm:   regfilemux_out = u_imm_wr;
         regfilemux::lw:      regfilemux_out = rdata_wr;
 
-        regfilemux::pc_plus4: regfilemux_out = pc_wr + 4;
+        regfilemux::pc_plus4: regfilemux_out = pc_wdata_wr + 4;
         regfilemux::lb: begin
             case(bit_shift_wr)
                 2'b00: regfilemux_out = {{24{rdata_wr[7]}},rdata_wr[7:0]};

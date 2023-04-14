@@ -51,23 +51,37 @@ always @ (negedge spike_print_clk) begin
 			$fwrite(fd, "0x%h", spike_print_rd_v);
 		end
 		if (spike_print_rmask != 0) begin
-			$fwrite(fd, " mem 0x%h", spike_print_dm_addr);
+			automatic int first_1 = 0;
+			for(int i = 0; i < 4; i++) begin
+				if(spike_print_rmask[i]) begin
+					first_1 = i;
+					break;
+				end
+			end
+			$fwrite(fd, " mem 0x%h", spike_print_dm_addr + first_1);
 		end
 		if (spike_print_wmask != 0) begin
 			automatic int amount_o_1 = 0;
+			automatic int first_1 = 0;
 			for(int i = 0; i < 4; i++) begin
 				if(spike_print_wmask[i]) begin
 					amount_o_1 += 1;
 				end
 			end
-			$fwrite(fd, " mem 0x%h", spike_print_dm_addr);
+			for(int i = 0; i < 4; i++) begin
+				if(spike_print_wmask[i]) begin
+					first_1 = i;
+					break;
+				end
+			end
+			$fwrite(fd, " mem 0x%h", spike_print_dm_addr + first_1);
 			case (amount_o_1)
 				1: begin
-					automatic logic[7:0] wdata_byte = spike_print_dm_wdata[8*spike_print_dm_addr[1:0] +: 8];
+					automatic logic[7:0] wdata_byte = spike_print_dm_wdata[8*first_1 +: 8];
 					$fwrite(fd, " 0x%h", wdata_byte);
 				end
 				2: begin
-					automatic logic[15:0] wdata_half = spike_print_dm_wdata[16*spike_print_dm_addr[1] +: 16];
+					automatic logic[15:0] wdata_half = spike_print_dm_wdata[8*first_1 +: 16];
 					$fwrite(fd, " 0x%h", wdata_half);
 				end
 				4:
