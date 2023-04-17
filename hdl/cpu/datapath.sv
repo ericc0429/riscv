@@ -147,12 +147,22 @@ rv32i_word wdata_out_final;
 assign data_mem_wdata = wdata_out_final << (8 * alu_out_mem[1:0]);
 
 logic pc_sel;   // br_en that only gets set if we are indeed branching
-assign pc_sel = br_en & ctrl_ex.br_sel;
+assign pc_sel = (br_en || (ctrl_ex.opcode == op_jal || ctrl_ex.opcode == op_jalr)) & ctrl_ex.br_sel;
+
+/* ================ STALL LOGIC ================ */
+logic stall_pipeline;
+logic instr_stall;
+logic data_stall;
+
+assign instr_stall = !instr_mem_resp && (instr_read);
+assign data_stall = !data_mem_resp && (data_read || data_write);
+assign stall_pipeline = instr_stall || data_stall;
+
 
 /* === branch prediction === */
 logic flush;    // for branch prediction
 // static branch-not-taken predictor logic -- if branch taken, flush IF/ID & ID/EX
-assign flush = pc_sel; 
+assign flush = pc_sel && !stall_pipeline; 
 
 
 /* === forwarding unit === */
@@ -423,15 +433,6 @@ fwd_unit FWD_UNIT (
     .rs2_fwd
 );
 
-/* ================ STALL LOGIC ================ */
-logic stall_pipeline;
-logic instr_stall;
-logic data_stall;
-
-assign instr_stall = !instr_mem_resp && (instr_read);
-assign data_stall = !data_mem_resp && (data_read || data_write);
-assign stall_pipeline = instr_stall || data_stall;
-
 /* ================ HAZARD DETECTION UNIT ================ */
 hazard_detection_unit HDU (
     .ctrl_ex,
@@ -526,7 +527,7 @@ always_comb begin : MUXES
         regfilemux::u_imm:   regfilemux_out = u_imm_wr;
         regfilemux::lw:      regfilemux_out = rdata_wr;
 
-        regfilemux::pc_plus4: regfilemux_out = pc_wdata_wr + 4;
+        regfilemux::pc_plus4: regfilemux_out = ctrl_wr.pc + 4;
         regfilemux::lb: begin
             case(bit_shift_wr)
                 2'b00: regfilemux_out = {{24{rdata_wr[7]}},rdata_wr[7:0]};
