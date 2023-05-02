@@ -1,7 +1,7 @@
 module wall_tree 
 (
-    input rv32i_word a,
-    input rv32i_word b,
+    input [31:0] a,
+    input [31:0] b,
 
     output logic [63:0] f
 );
