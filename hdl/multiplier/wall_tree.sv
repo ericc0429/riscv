@@ -2,18 +2,60 @@ module wall_tree
 (
     input [31:0] a,
     input [31:0] b,
+    input op1sign,
+    input op2sign,
 
     output logic [63:0] f
 );
+
+// take care of signs
+logic final_sign;
+logic [31:0] op1, op2;
+logic sign1, sign2;
+
+always_comb begin
+    sign1 = '0;
+    sign2 = '0;
+    op1 = a;
+    op2 = b;
+
+    if (op1sign && op2sign) begin  // signed, signed
+        if (a[31]) begin
+            op1 = ~a + 1;
+            sign1 = '1;
+        end
+        if (b[31]) begin
+            op2 = ~b + 1;
+            sign2 = '1;
+        end
+        final_sign = sign1 ^ sign2;
+    end
+
+    else if (op1sign) begin // signed, unsigned
+        if (a[31]) begin
+            op1 = ~a + 1;
+            sign1 = '1;
+        end
+        final_sign = sign1;
+    end
+
+    else        // unsigned, unsigned
+        final_sign = '0;
+end
 
 // calculate partials
 
 logic [63:0] partials [32];
 logic [31:0] p;
+logic [63:0] p2;
 
-for (int i=0; i<32; i++) begin
-    p = a & {32{b[i]}};
-    partials[i] = p << i;
+always_comb begin
+    for (int i=0; i<32; i++) begin
+        // p = 64'b0;
+        p = op1 & {32{op2[i]}};
+        p2 = {32'b0, p};
+        partials[i] = p2 << i;
+    end
 end
 
 // stage 1 (32 -> 22)
@@ -71,15 +113,27 @@ fa fa27 (.row0(s5[0]),     .row1(s5[1]),     .row2(s5[2]),     .x(s6[0]),      .
 // stage 7 (4 -> 3)
 logic [63:0] s7 [2];
 
-fa fa28 (.row0(s6[0]),     .row(s6[1]),     .row2(s5[3]),     .x(s7[0]),      .y(s7[1]));
+fa fa28 (.row0(s6[0]),     .row1(s6[1]),     .row2(s5[3]),     .x(s7[0]),      .y(s7[1]));
 
 // stage 8 (3 -> 2)
 logic [63:0] s8 [2];
 
-fa fa28 (.row0(s7[0]),     .row(s7[1]),     .row2(s3[9]),     .x(s8[0]),      .y(s8[1]));
+fa fa29 (.row0(s7[0]),     .row1(s7[1]),     .row2(s3[9]),     .x(s8[0]),      .y(s8[1]));
 
 // final summation
+logic [63:0] mag;
+cpa cpa (.row0(s8[0]), .row1(s8[1]), .x(mag));
 
-cpa cpa (.row0(s8[0]), .row1(s8[1]), .x(f));
+
+always_comb begin
+    if (final_sign) begin
+        f = {{32{1'b1}}, mag[31:0]};
+    end
+
+    else
+        f = mag;
+       
+end
+// assign f = {final_sign, (~(mag-1))[62:0]  };
 
 endmodule : wall_tree

@@ -36,10 +36,10 @@ b = 32'd6;
 
 #2
 
-ans = 64'd30;
+ans_pp = 64'd30;
 
 #45 
-	if (f != ans)
+	if (f != ans_pp)
 		ErrorCnt++;
 
 
@@ -50,10 +50,10 @@ b = 32'd6;
 
 #2
 
-ans = -64'd30;
+ans_np = -64'd30;
 
 #45 
-	if (f != ans)
+	if (f != ans_np)
 		ErrorCnt++;
 					
 		

@@ -22,6 +22,12 @@ function void set_defaults();
     ctrl.mem_read = 1'b0;
     ctrl.mem_write = 1'b0;
     ctrl.br_sel = 1'b0;
+    ctrl.muldiv_mask = 1'b0;    // 0 is lower 32 bits of result, 1 is upper 32 bits
+    ctrl.su_op1 = 1'b0;         // 0 means operand 1 is unsigned, 1 means signed
+    ctrl.su_op2 = 1'b0;         // 0 means operand 2 is unsigned, 1 means signed
+    ctrl.arith_mux_sel = 1'b0;  // 0 means we want alu result, 1 means we want muldiv result
+    ctrl.muldiv_mux_sel = muldiv_mux::mul_l;
+    ctrl.divsign = 1'b0;        // 0 is unsigned, 1 is signed
     // ctrl.mem_byte_enable = 4'b1111;
 endfunction
 
@@ -154,47 +160,114 @@ begin
 
         op_reg:
         begin
-            case (arith_funct3_t'(funct3))
-                // add/sub -- check bit30 for sub if op_reg opcode
-                add:
-                begin
-                    loadRegfile(regfilemux::alu_out);
-                    if (funct7[5]) setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_sub); // sub
-                    else setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_add); // add
-                end
+            // multiply/divide operations
+            if (funct7[0]) begin
+                ctrl.arith_mux_sel = '1;
+                loadRegfile(regfilemux::alu_out);
 
-                // sll:
 
-                slt:
-                begin
-                    loadRegfile(regfilemux::br_en);
-                    setCMP(cmpmux::rs2_out, 1'b1, blt);
-                end
+                case (muldiv_funct3_t'(funct3))
+                    mul: begin
+                        // loadRegfile(regfilemux::mul_out);
+                        ctrl.muldiv_mask = '0;
+                    end
 
-                sltu:
-                begin
-                    loadRegfile(regfilemux::br_en);
-                    setCMP(cmpmux::rs2_out, 1'b1, bltu);
-                end
+                    mulh: begin
+                        // loadRegfile(regfilemux::mul_out);
+                        ctrl.muldiv_mask = '1;
+                        ctrl.su_op1 = '1;
+                        ctrl.su_op2 = '1;
+                        ctrl.muldiv_mux_sel = muldiv_mux::mul_u;
+                    end
+                    
+                    mulhsu: begin
+                        // loadRegfile(regfilemux::mul_out);
+                        ctrl.muldiv_mask = '1;
+                        ctrl.su_op1 = '1;
+                        ctrl.muldiv_mux_sel = muldiv_mux::mul_u;
+                    end
 
-                // axor:    // xor
+                    mulhu: begin
+                        // loadRegfile(regfilemux::mul_out);
+                        ctrl.muldiv_mask = '1;
+                        ctrl.muldiv_mux_sel = muldiv_mux::mul_u;
+                    end
 
-                sr:     // srl/sra, check bit30 to determine if logical (0) or arithmetic (1)
-                begin
-                    loadRegfile(regfilemux::alu_out);
-                    if (funct7[5]) setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_sra);
-                    else setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_srl);
-                end
+                    div: begin
+                        // loadRegfile(regfilemux::div_out);
+                        ctrl.muldiv_mask = '0;
+                        ctrl.su_op1 = '1;
+                        ctrl.su_op2 = '1;
+                        ctrl.muldiv_mux_sel = muldiv_mux::div;
+                        ctrl.divsign = '1;
+                    end
 
-                // aor:     //or
-                // aand:    //and
+                    divu: begin
+                        // loadRegfile(regfilemux::div_out);
+                        ctrl.muldiv_mask = '1;
+                        ctrl.muldiv_mux_sel = muldiv_mux::div;
+                    end
 
-                default:
-                begin
-                    loadRegfile(regfilemux::alu_out);
-                    setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_ops'(funct3));
-                end
-            endcase
+                    rem: begin
+                        // loadRegfile(regfilemux::div_out);
+                        ctrl.muldiv_mask = '0;
+                        ctrl.su_op1 = '1;
+                        ctrl.su_op2 = '1;
+                        ctrl.muldiv_mux_sel = muldiv_mux::rem;
+                        ctrl.divsign = '1;
+                    end
+
+                    remu: begin
+                        // loadRegfile(regfilemux::div_out);
+                        ctrl.muldiv_mask = '1;
+                        ctrl.muldiv_mux_sel = muldiv_mux::rem;
+                    end
+                endcase
+            end
+
+            else begin
+                case (arith_funct3_t'(funct3))
+                    // add/sub -- check bit30 for sub if op_reg opcode
+                    add:
+                    begin
+                        loadRegfile(regfilemux::alu_out);
+                        if (funct7[5]) setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_sub); // sub
+                        else setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_add); // add
+                    end
+
+                    // sll:
+
+                    slt:
+                    begin
+                        loadRegfile(regfilemux::br_en);
+                        setCMP(cmpmux::rs2_out, 1'b1, blt);
+                    end
+
+                    sltu:
+                    begin
+                        loadRegfile(regfilemux::br_en);
+                        setCMP(cmpmux::rs2_out, 1'b1, bltu);
+                    end
+
+                    // axor:    // xor
+
+                    sr:     // srl/sra, check bit30 to determine if logical (0) or arithmetic (1)
+                    begin
+                        loadRegfile(regfilemux::alu_out);
+                        if (funct7[5]) setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_sra);
+                        else setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_srl);
+                    end
+
+                    // aor:     //or
+                    // aand:    //and
+
+                    default:
+                    begin
+                        loadRegfile(regfilemux::alu_out);
+                        setALU(alumux::rs1_out, alumux::rs2_out, 1'b1, alu_ops'(funct3));
+                    end
+                endcase
+            end
         end
 
         default: begin

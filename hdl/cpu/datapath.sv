@@ -95,6 +95,8 @@ rv32i_word alu_out_wr;
 rv32i_word alumux1_out;
 rv32i_word alumux2_out;
 
+rv32i_word arith_out;
+
 /* === CMP signals === */
 rv32i_word cmpmux_out;
 
@@ -277,7 +279,7 @@ reg_ex_mem EX_MEM (
 
     .rd             (rd_ex),
 
-    .alu_res        (alu_out),
+    .alu_res        (arith_out),
     .write_data     (rs2_data_ex),
     .u_imm          (u_imm_ex),
 
@@ -378,6 +380,29 @@ hazard_detection_unit HDU (
     .sd
 );
 
+/* ================ MULTIPLIER ================ */
+logic [31:0] muldiv_res;
+logic [63:0] mult_res;
+logic [31:0] div_res, rem_res;
+
+wall_tree wallace (
+    .a(rs1_data_final),
+    .b(rs2_data_final),
+    .op1sign(ctrl_ex.su_op1),
+    .op2sign(ctrl_ex.su_op2),
+    
+    .f(mult_res)
+);
+
+divider DIV (
+    .a(rs1_data_final),
+    .b(rs2_data_final),
+    .sign(ctrl_ex.divsign),
+
+    .f(div_res),
+    .rem(rem_res)
+);
+
 /* ================ MUXES ================ */
 always_comb begin : MUXES
 
@@ -439,6 +464,23 @@ always_comb begin : MUXES
         alumux::j_imm:      alumux2_out = j_imm_ex;
         alumux::rs2_out:    alumux2_out = rs2_data_final;
         default: alumux2_out = i_imm_ex;
+    endcase
+
+    // MULDIV MUX - choose whether to look at mul or div result 
+    unique case (ctrl_ex.muldiv_mux_sel)
+        muldiv_mux::mul_l:      muldiv_res = mult_res[31:0];
+        muldiv_mux::mul_u:      muldiv_res = mult_res[63:32];
+        muldiv_mux::div:        muldiv_res = div_res;
+        muldiv_mux::rem:        muldiv_res = rem_res;
+        default:                muldiv_res = mult_res[31:0];
+    endcase
+
+    // ARITH MUX - choose whether to send ALU output or muldiv output past ex stage
+    unique case (ctrl_ex.arith_mux_sel)
+        1'b0:       arith_out = alu_out;
+        // 1'b1:       arith_out = (mult_res >> (32*ctrl_ex.muldiv_mask))[31:0];
+        1'b1:       arith_out = muldiv_res;
+        default:    arith_out = alu_out;
     endcase
 
     // REGFILE MUX

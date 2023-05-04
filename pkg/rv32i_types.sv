@@ -7,6 +7,7 @@ import marmux::*;
 import cmpmux::*;
 import alumux::*;
 import regfilemux::*;
+import muldiv_mux::*;
 
 typedef logic [31:0] rv32i_word;
 typedef logic [4:0] rv32i_reg;
@@ -60,6 +61,17 @@ typedef enum bit [2:0] {
 } arith_funct3_t;
 
 typedef enum bit [2:0] {
+    mul    = 3'b000,
+    mulh   = 3'b001,
+    mulhsu = 3'b010,
+    mulhu  = 3'b011,
+    div    = 3'b100,
+    divu   = 3'b101,
+    rem    = 3'b110,
+    remu   = 3'b111
+} muldiv_funct3_t;
+
+typedef enum bit [2:0] {
     alu_add = 3'b000,
     alu_sll = 3'b001,
     alu_sra = 3'b010,
@@ -84,6 +96,12 @@ typedef struct packed {
     logic mem_write;
     logic mem_read;
     logic br_sel;
+    logic muldiv_mask;
+    logic su_op1;
+    logic su_op2;
+    logic arith_mux_sel;
+    muldiv_mux_sel_t muldiv_mux_sel;
+    logic divsign;
     // logic [3:0] mem_byte_enable;
 } rv32i_control_word;
 
