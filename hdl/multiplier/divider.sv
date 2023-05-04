@@ -14,27 +14,49 @@ logic [31:0] acc_b; // accumulator minus b
 
 // assign acc_a = {32'b0, a};
 // assign q = 32'b0;
+logic sign1, sign2, final_sign;
+logic [31:0] op1, op2;
 
 always_comb begin
-    acc_a = {32'b0, a};
+    sign1 = '0;
+    sign2 = '0;
+    op1 = a;
+    op2 = b;
+
+    if (sign) begin
+        if (a[31]) begin
+            op1 = ~a + 1;
+            sign1 = '1;
+        end
+        if (b[31]) begin
+            op1 = ~a + 1;
+            sign2 = '1;
+        end
+    end
+
+    final_sign = sign1 ^ sign2;
+end
+
+always_comb begin
+    acc_a = {32'b0, op1};
     q = 32'b0;
 
     // divide by zero
-    if (b == '0) begin
+    if (op2 == '0) begin
         if (sign) begin
             f = -1;
-            rem = a;
+            rem = op1;
         end
 
         else begin
             f = {32{1'b1}};
-            rem = a;
+            rem = op1;
         end
     end
 
     // overflow
-    if (a[31] == '1 && a[30:0] == '0 && b == -1) begin
-        f = a;
+    if (op1[31] == '1 && op1[30:0] == '0 && op2 == -1) begin
+        f = op1;
         rem = 32'b0;
     end 
 
@@ -43,15 +65,21 @@ always_comb begin
         acc_a = acc_a << 1;
         q = q << 1;
 
-        if (acc_a[63:32] >= b) begin
-            acc_b = acc_a[63:32] - b;
+        if (acc_a[63:32] >= op2) begin
+            acc_b = acc_a[63:32] - op2;
             acc_a = {acc_b, acc_a[31:0]};
             q[0] = 1'b1;
         end
     end
 
-    f = q;
-    rem = acc_a[63:32];
+    if (final_sign) begin
+        f = -q;
+        rem = -acc_a[63:32];
+    end
+    else begin
+        f = q;
+        rem = acc_a[63:32];
+    end
 end
 
 endmodule : divider

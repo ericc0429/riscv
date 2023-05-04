@@ -29,9 +29,12 @@ add x0, x0, x0
 divu x12, x1, x2 
 remu x13, x1, x2
 
-add x15, x15, 2
+div x14, x1, x7
+rem x15, x1, x7
+
 add x16, x16, 2
 add x17, x17, 3
+add x18, x18, 3
 
 
 
