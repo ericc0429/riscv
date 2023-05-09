@@ -90,6 +90,21 @@ typedef struct packed {
     logic valid;
 } rv32i_control_word;
 
+typedef struct packed {
+    rv32i_reg rs1;
+    rv32i_reg rs2;
+    rv32i_reg rd;
+
+    rv32i_word rs1_data;
+    rv32i_word rs2_data;
+
+    rv32i_word i_imm;
+    rv32i_word s_imm;
+    rv32i_word b_imm;
+    rv32i_word u_imm;
+    rv32i_word j_imm;
+} rv32i_reg_word;
+
 typedef enum bit [1:0] {
     no_stall        = 2'b00,
     read_after_load = 2'b01,

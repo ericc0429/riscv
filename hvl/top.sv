@@ -34,7 +34,7 @@ spike_log_printer printer(.itf(itf), .rvfi(rvfi));
 /************************ Signals necessary for monitor **********************/
 // This section not required until CP2
 
-assign rvfi.commit = ((dut.datapath.ctrl_wr.valid) && !dut.datapath.cur_stall); // Set high when a valid instruction is modifying regfile or PC
+assign rvfi.commit = ((dut.datapath.ctrl_wb.valid) && !dut.datapath.cur_stall); // Set high when a valid instruction is modifying regfile or PC
 assign rvfi.halt = (rvfi.commit && (rvfi.pc_rdata == rvfi.pc_wdata)); // Set high when target PC == Current PC for a branch
 initial rvfi.order = 0;
 always @(posedge itf.clk iff rvfi.commit) rvfi.order <= rvfi.order + 1; // Modify for OoO
@@ -44,29 +44,29 @@ assign rvfi.rst = itf.rst;
 
 function void set_defaults();
     // Instruction and trap:
-    rvfi.inst = dut.datapath.ctrl_wr.instr;
-    rvfi.trap = dut.datapath.trap_wr;
+    rvfi.inst = dut.datapath.ctrl_wb.instr;
+    rvfi.trap = dut.datapath.trap_wb;
 
     // Regfile:
-    rvfi.rs1_addr = dut.datapath.rs1_addr_wr;
-    rvfi.rs2_addr = dut.datapath.rs2_addr_wr;
-    rvfi.rs1_rdata = dut.datapath.rs1_data_wr;
-    rvfi.rs2_rdata = dut.datapath.rs2_data_wr;
+    rvfi.rs1_addr = dut.datapath.regs_wb.rs1;
+    rvfi.rs2_addr = dut.datapath.regs_wb.rs2;
+    rvfi.rs1_rdata = dut.datapath.regs_wb.rs1_data;
+    rvfi.rs2_rdata = dut.datapath.regs_wb.rs2_data;
 
-    rvfi.load_regfile = dut.datapath.ctrl_wr.load_regfile;
-    rvfi.rd_addr = dut.datapath.rd_wr;
+    rvfi.load_regfile = dut.datapath.ctrl_wb.load_regfile;
+    rvfi.rd_addr = dut.datapath.regs_wb.rd;
     rvfi.rd_wdata = dut.datapath.regfilemux_out;
 
     // PC:
-    rvfi.pc_rdata = dut.datapath.ctrl_wr.pc;
-    rvfi.pc_wdata = dut.datapath.pc_wdata_wr;
+    rvfi.pc_rdata = dut.datapath.ctrl_wb.pc;
+    rvfi.pc_wdata = dut.datapath.pc_wb;
 
     // Memory:
-    rvfi.mem_addr = dut.datapath.alu_out_wr;
-    rvfi.mem_rmask = dut.datapath.rmask_wr;
-    rvfi.mem_wmask = dut.datapath.wmask_wr;
-    rvfi.mem_rdata = dut.datapath.rdata_wr;
-    rvfi.mem_wdata = dut.datapath.wdata_wr; 
+    rvfi.mem_addr = dut.datapath.alu_out_wb;
+    rvfi.mem_rmask = dut.datapath.rmask_wb;
+    rvfi.mem_wmask = dut.datapath.wmask_wb;
+    rvfi.mem_rdata = dut.datapath.rdata_wb;
+    rvfi.mem_wdata = dut.datapath.wdata_wb; 
 
 endfunction
 
@@ -76,7 +76,7 @@ always_comb begin
 
     set_defaults();
 
-    case(dut.datapath.ctrl_wr.opcode)
+    case(dut.datapath.ctrl_wb.opcode)
         
         op_reg, op_store, op_br: ;
 
@@ -93,14 +93,14 @@ always_comb begin
         end
     endcase
 
-    if(!dut.datapath.ctrl_wr.mem_read)begin
+    if(!dut.datapath.ctrl_wb.mem_read)begin
         rvfi.mem_rmask = 4'h0;
     end
-    if(!dut.datapath.ctrl_wr.mem_write)begin
+    if(!dut.datapath.ctrl_wb.mem_write)begin
         rvfi.mem_wmask = 4'h0;
     end
 
-    if(dut.datapath.rd_wr == '0)begin
+    if(dut.datapath.regs_wb.rd == '0)begin
         rvfi.rd_wdata = 32'd0;
     end
 

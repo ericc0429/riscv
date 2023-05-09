@@ -2,12 +2,12 @@ module fwd_unit
 import rv32i_types::*;
 (
     // inputs
-    input rv32i_reg rd_wr,
+    input rv32i_reg rd_wb,
     input rv32i_reg rd_mem,
     input rv32i_reg rs1,
     input rv32i_reg rs2,
 
-    input rv32i_word rdata_wr,
+    input rv32i_word rdata_wb,
     input rv32i_word alu_out_mem,     // alu output being propagated
     input rv32i_word regfilemux_out,
 
@@ -42,9 +42,9 @@ always_comb begin : rs1_forwarding
             rs1_fwd = alu_out_mem;
             rs1_fwdflag  = '1; 
         end
-        else if(rs1 == rd_wr) begin          // rs1 changes in wr stage
+        else if(rs1 == rd_wb) begin          // rs1 changes in wr stage
             if (fwd_data)
-                rs1_fwd = rdata_wr;
+                rs1_fwd = rdata_wb;
             else
                 rs1_fwd = regfilemux_out;
 
@@ -63,9 +63,9 @@ always_comb begin : rs2_forwarding
             rs2_fwd = alu_out_mem;
             rs2_fwdflag = '1;
         end
-        else if(rs2 == rd_wr) begin          // rs2 changes in the wr stage
+        else if(rs2 == rd_wb) begin          // rs2 changes in the wr stage
             if (fwd_data)
-                rs2_fwd = rdata_wr;
+                rs2_fwd = rdata_wb;
             else
                 rs2_fwd = regfilemux_out;
 
@@ -78,7 +78,7 @@ end
 always_comb begin : rs2_forwarding_mem
     rs2_fwdflag_mem = '0;
 
-    if ((rd_mem != '0) && (rd_mem == rd_wr)) begin
+    if ((rd_mem != '0) && (rd_mem == rd_wb)) begin
         rs2_fwdflag_mem = '1;
     end
 end

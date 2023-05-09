@@ -37,15 +37,15 @@ always_ff @(posedge clk)
 begin
     if (rst)
     begin
-        data <= '0;
+        data = '0;
     end
     else if (load == 1)
     begin
-        data <= in;
+        data = in;
     end
     else
     begin
-        data <= data;
+        data = data;
     end
 end
 
