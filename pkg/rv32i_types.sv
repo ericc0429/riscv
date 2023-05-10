@@ -84,10 +84,10 @@ typedef struct packed {
     logic mem_write;
     logic mem_read;
     logic br_sel;
-    // logic [3:0] mem_byte_enable;
     rv32i_word instr;
     rv32i_word pc;
     logic valid;
+    logic use_rd;
 } rv32i_control_word;
 
 typedef struct packed {

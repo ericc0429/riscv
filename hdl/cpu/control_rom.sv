@@ -24,13 +24,11 @@ function void set_defaults();
     ctrl.mem_read = 1'b0;
     ctrl.mem_write = 1'b0;
     ctrl.br_sel = 1'b0;
-    // ctrl.mem_byte_enable = 4'b1111;
-
-    //ADDED elements for RVFI
+    // RVFI
     ctrl.instr = instr_id;
     ctrl.pc = pc_id;
-    ctrl.valid = '0;
-
+    ctrl.valid = 1'b0;
+    ctrl.use_rd = 1'b1;
 endfunction
 
 function void loadRegfile(regfilemux::regfilemux_sel_t sel);
@@ -100,7 +98,8 @@ begin
             setALU(alumux::pc_out, alumux::b_imm, 1'b1, alu_add);
             setCMP(cmpmux::rs2_out, 1'b1, branch_funct3_t'(funct3));
             ctrl.br_sel = 1'b1;
-            // ctrl.br_sel = '1;
+            ctrl.use_rd = 1'b0;
+
         end
 
         op_load:
@@ -122,11 +121,7 @@ begin
             ctrl.valid = 1'b1;
             setALU(alumux::rs1_out, alumux::s_imm, 1'b1, alu_add);
             ctrl.mem_write = 1'b1;
-            // case(store_funct3_t'(funct3))
-            //     sw: ctrl.mem_byte_enable = 4'b1111;
-            //     sh: ctrl.mem_byte_enable = 4'b1111;
-            //     sb: ctrl.mem_byte_enable = 4'b1111;
-            // endcase
+            ctrl.use_rd = 1'b0;
         end
 
         op_imm:

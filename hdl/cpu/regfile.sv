@@ -4,6 +4,7 @@ module regfile
     input rst,
     input load,
     input [31:0] in,
+    input use_rd,
     input [4:0] src_a, src_b, dest,
     output logic [31:0] reg_a, reg_b
 );
@@ -30,17 +31,11 @@ begin
     // Create transparent Regfile by making sure that
     // if rd is the same as the source register make them equal to
     // the output of the regfilemux_out
-    if (dest != 0 && dest == src_a) begin
-        reg_a = in;
-    end else begin
-        reg_a = src_a ? data[src_a] : 0;
-    end
+    if (dest != 0 && dest == src_a && use_rd) reg_a = in;
+    else reg_a = src_a ? data[src_a] : 0;
     
-    if(dest != 0 && dest == src_b)begin
-        reg_b = in;
-    end else begin
-        reg_b = src_b ? data[src_b] : 0;
-    end
+    if(dest != 0 && dest == src_b && use_rd) reg_b = in;
+    else reg_b = src_b ? data[src_b] : 0;
 end
 
 endmodule : regfile

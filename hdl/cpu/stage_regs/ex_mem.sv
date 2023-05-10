@@ -13,6 +13,9 @@ import rv32i_types::*;
     input rv32i_word alu_res,               // represents new pc, address, or operation result
     input rv32i_word write_data,
 
+    input logic fwd_flag_ex,
+    input rv32i_word regmux_ex,
+
     output rv32i_word pc_mem,
     output rv32i_control_word ctrl_mem,
     output rv32i_reg_word regs_mem,
@@ -25,7 +28,10 @@ import rv32i_types::*;
 
     output logic [3:0] rmask_out,
     output logic trap_out,
-    output rv32i_word write_data_out
+    output rv32i_word write_data_out,
+
+    output logic fwd_flag_mem,
+    output rv32i_word regmux_mem
 );
 
 rv32i_word addr;      // purely for clarity
@@ -101,6 +107,9 @@ begin
         rmask_out <= '0;
         trap_out <= '0;
         write_data_out <= '0;
+
+        fwd_flag_mem <= '0;
+        regmux_mem <= '0;
     end
 
     else if (load)
@@ -118,6 +127,9 @@ begin
         rmask_out <= rmask;
         trap_out <= trap;
         write_data_out <= write_data;
+
+        fwd_flag_mem <= fwd_flag_ex;
+        regmux_mem <= regmux_ex;
     end
     
     else
@@ -135,6 +147,9 @@ begin
         rmask_out <= rmask_out;
         trap_out <= trap_out;
         write_data_out <= write_data_out;
+
+        fwd_flag_mem <= fwd_flag_mem;
+        regmux_mem <= regmux_mem;
     end
 end
 

@@ -145,7 +145,10 @@ assign flush = pc_sel && !stall_pipeline;
 /* === forwarding unit === */
 logic rs1_fwdflag;
 logic rs2_fwdflag;
-logic rs2_fwdflag_mem;
+logic rs2_fwdflag_mem1b;    // rs2_fwdflag_mem1behind
+logic rs2_fwdflag_mem2b;    // rs2_fwdflag_mem2behind
+logic rs2_2b_n1b;           // rs2_2behind_now1behind
+rv32i_word regmux_mem;
 rv32i_word rs1_fwd;
 rv32i_word rs2_fwd;
 
@@ -172,7 +175,7 @@ rv32i_brp_word brp_if;
 rv32i_brp_word brp_id;
 rv32i_brp_word brp_ex;
 
-
+/*
 brp PREDICTOR (
     .clk,
     .rst,
@@ -183,6 +186,7 @@ brp PREDICTOR (
     // Outputs
     .brp_if
 );
+*/
 
 /* ================ REGISTERS ================ */
 
@@ -199,6 +203,7 @@ regfile regfile (
     .rst,
     .load   (ctrl_wb.load_regfile),
     .in     (regfilemux_out),
+    .use_rd (ctrl_wb.use_rd),
     .src_a  (regs_id.rs1),
     .src_b  (regs_id.rs2),
     .dest   (regs_wb.rd),
@@ -305,6 +310,9 @@ reg_ex_mem EX_MEM (
     .alu_res        (alu_out),
     .write_data     (regs_ex.rs2_data),
 
+    .fwd_flag_ex    (rs2_fwdflag_mem2b),
+    .regmux_ex      (regfilemux_out),
+
     // Outputs
     .pc_mem,
     .ctrl_mem,
@@ -318,7 +326,10 @@ reg_ex_mem EX_MEM (
 
     .rmask_out      (rmask_mem),
     .trap_out       (trap_mem),
-    .write_data_out (wdata_out)
+    .write_data_out (wdata_out),
+
+    .fwd_flag_mem   (rs2_2b_n1b),
+    .regmux_mem
 );
 
 reg_mem_wb MEM_WB (
@@ -335,7 +346,7 @@ reg_mem_wb MEM_WB (
     .alu_res        (alu_out_mem),
     .bit_shift      (bit_shift_mem),
 
-    .write_data     (wdata_out),
+    .write_data     (data_mem_wdata),
     .wmask_in       (data_mbe),
     .rmask_in       (rmask_mem),
     .trap_in        (trap_mem),
@@ -363,8 +374,12 @@ fwd_unit FWD_UNIT (
     // inputs
     .rd_wb  (regs_wb.rd),
     .rd_mem (regs_mem.rd),
-    .rs1    (regs_ex.rs1),
-    .rs2    (regs_ex.rs2),
+    .rs1_ex (regs_ex.rs1),
+    .rs2_ex (regs_ex.rs2),
+    .rs2_mem(regs_mem.rs2),
+
+    .use_rd_mem     (ctrl_mem.use_rd),
+    .use_rd_wb      (ctrl_wb.use_rd),
 
     .rdata_wb,
     .alu_out_mem,     // alu output being propagated
@@ -377,7 +392,8 @@ fwd_unit FWD_UNIT (
     // outputs
     .rs1_fwdflag,
     .rs2_fwdflag,
-    .rs2_fwdflag_mem,
+    .rs2_fwdflag_mem1b,
+    .rs2_fwdflag_mem2b,
     .rs1_fwd,
     .rs2_fwd
 );
@@ -451,8 +467,9 @@ always_comb begin : MUXES
     endcase
 
     // FWD MUX #3 (choose which write data to send -> mem)
-    unique case (rs2_fwdflag_mem)
-        1'b1: wdata_out_final = regfilemux_out;
+    unique case ({rs2_2b_n1b, rs2_fwdflag_mem1b})
+        2'b01: wdata_out_final = regfilemux_out;
+        2'b10: wdata_out_final = regmux_mem;
         default: wdata_out_final = wdata_out;
     endcase
 
