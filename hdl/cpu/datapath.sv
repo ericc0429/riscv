@@ -62,18 +62,19 @@ logic load_ir;
 assign load_ir = instr_mem_resp;
 
 /* === PC WORD === */
+rv32i_word pc_wdata_if;
+rv32i_word pc_wdata_ex;
+
 rv32i_pc_word pc_if;
-assign pc_if.pc_wdata = pc_if.pc + 4;
+// assign pc_if.pc_wdata = pc_if.pc + 4;
+assign pc_if.pc_wdata = pc_wdata_if;
 assign pc_if.instr = instr_mem_rdata;
 rv32i_pc_word pc_id;
-rv32i_pc_word pc_id_final;
+// rv32i_pc_word pc_id_final;
 rv32i_pc_word pc_ex;
 rv32i_pc_word pc_ex_final;
 rv32i_pc_word pc_mem;
 rv32i_pc_word pc_wb;
-
-rv32i_word pc_wdata_id;
-rv32i_word pc_wdata_ex;
 
 /* === Control ROM signals === */
 rv32i_control_word ctrl;
@@ -149,7 +150,7 @@ assign stall_pipeline = instr_stall || data_stall;
 /* === branch prediction === */
 logic flush;    // for branch prediction
 // static branch-not-taken predictor logic -- if branch taken, flush IF/ID & ID/EX
-assign flush = pc_sel && !stall_pipeline; 
+// assign flush = pc_sel && !stall_pipeline; 
 
 
 /* === forwarding unit === */
@@ -186,11 +187,15 @@ rv32i_brp_word brp_id;
 rv32i_brp_word brp_ex;
 rv32i_brp_word brp_ex_out;
 
+// For debug
+logic mispredicted;
+assign mispredicted = (brp_ex_out.predicted && brp_ex_out.mp_valid && brp_ex_out.mispredicted);
+
 brp PREDICTOR (
     .clk,
     .rst,
     .load   (load_brp),
-    .update (brp_ex.predicted),
+    .update (ctrl_ex.opcode == op_br),
     
     // Inputs
     .pc_if  (pc_if.pc),
@@ -198,12 +203,10 @@ brp PREDICTOR (
     .b_imm  (regs_if.b_imm),
     .j_imm  (regs_if.j_imm),
 
-    .brp_ex,
-    .br_en,
+    .brp_ex (brp_ex_out),
 
     // Outputs
-    .brp_if,
-    .brp_ex_out
+    .brp_if
 );
 
 /* ================ REGISTERS ================ */
@@ -230,7 +233,7 @@ regfile regfile (
 );
 
 ir IR(
-    .clk    (clk),
+    // .clk    (clk),
     .rst    (rst || flush),
     .load   (load_if_id),
     .in     (instr_mem_rdata),
@@ -287,13 +290,15 @@ reg_if_id IF_ID (
     .funct3_if,
     .funct7_if,
     .regs_if,
+    .brp_if,
 
     // Outputs
     .pc_id,
     .opcode_id  (opcode),
     .funct3_id  (funct3),
     .funct7_id  (funct7),
-    .regs_id
+    .regs_id,
+    .brp_id
 );
 
 reg_id_ex ID_EX (
@@ -302,7 +307,7 @@ reg_id_ex ID_EX (
     .load       (load_id_ex),
 
     // Inputs
-    .pc_id      (pc_id_final),
+    .pc_id      (pc_id),
     .ctrl_id,
     .regs_id    (regs_id_data),
     .brp_id,
@@ -434,13 +439,15 @@ hdu HDU (
     .sd
 );
 
-always_comb begin : ID_WORDS_UPDATE
-    // Passes values from pc_id to pc_id_final
+/* always_comb begin : IF_WORDS_UPDATE
+    // Passes values from pc_if to pc_if_final
     // Allows us to update pc_wdata
-    pc_id_final.pc          = pc_id.pc;
-    pc_id_final.pc_wdata    = pc_id.pc;//pc_wdata_id;
-    pc_id_final.instr       = pc_id.instr;
+    pc_if_final.pc          = pc_if.pc;
+    pc_if_final.pc_wdata    = pc_wdata_if;
+    pc_if_final.instr       = pc_if.instr;
+end */
 
+always_comb begin : ID_WORDS_UPDATE
     // Passes values from regs_id to regs_id_data.
     // Allows us to have the regfile update the rs1_data and rs2_data fields.
     regs_id_data.rs1        = regs_id.rs1;
@@ -455,11 +462,11 @@ always_comb begin : ID_WORDS_UPDATE
     regs_id_data.j_imm      = regs_id.j_imm;
 end
 
-always_comb begin : EX_REG_UPDATE
+always_comb begin : EX_WORDS_UPDATE
     pc_ex_final.pc          = pc_ex.pc;
-    //if (brp_ex_out.predicted && brp_ex_out.mp_valid && brp_ex_out.mispredicted)
+    //if (brp_ex_out.predicted && brp_ex_out.mp_valid)
     pc_ex_final.pc_wdata    = pc_wdata_ex;
-    //else pc_ex_final.pc_wdata   = pc_ex.pc_wdata;
+    //else pc_ex_final.pc_wdata = pc_ex.pc_wdata;
     pc_ex_final.instr       = pc_ex.instr;
 
     regs_ex_fwd.rs1        = regs_ex.rs1;
@@ -472,6 +479,13 @@ always_comb begin : EX_REG_UPDATE
     regs_ex_fwd.b_imm      = regs_ex.b_imm;
     regs_ex_fwd.u_imm      = regs_ex.u_imm;
     regs_ex_fwd.j_imm      = regs_ex.j_imm;
+
+    brp_ex_out.predicted = brp_ex.predicted;
+    brp_ex_out.prediction = brp_ex.prediction;
+    brp_ex_out.brp_target = brp_ex.brp_target;
+    brp_ex_out.brp_alt = brp_ex.brp_alt;
+    brp_ex_out.mp_valid = brp_ex.predicted;
+    brp_ex_out.mispredicted = (brp_ex.predicted && brp_ex.prediction != br_en);
 end
 
 /* ================ MUXES ================ */
@@ -510,7 +524,7 @@ always_comb begin : MUXES
     endcase
 
     // PC MUX
-    unique case (pc_sel)
+/*     unique case (pc_sel)
         1'b1:
         begin
             pcmux_out = alu_out;
@@ -521,35 +535,37 @@ always_comb begin : MUXES
             pcmux_out = alupc_out;
             pc_wdata_ex = pc_ex.pc+4;
         end
-    endcase
+    endcase */
 
-/*     // New PC MUX
-    if (brp_ex_out.predicted && brp_ex_out.mp_valid && brp_ex_out.mispredicted)
+    // New PC MUX
+    if (mispredicted)
     begin
-        // Mispredicted; flush pipeline and reset to ALU out
-        pcmux_out = alu_out;
-        pc_wdata_ex = alu_out;
+        // Mispredicted; flush pipeline and reset to other branch target addr
+        pcmux_out = brp_ex_out.brp_alt;
+        pc_wdata_ex = brp_ex_out.brp_alt;
         flush = !stall_pipeline; // Don't flush if pipeline is stalled
     end
     else
-        unique case (opcode_if)
-            op_jal:
+    begin
+        // What if we predicted correctly? We need to update pc_wdata_ex still.
+        if (brp_ex_out.predicted && brp_ex_out.mp_valid)
+            pc_wdata_ex = brp_ex_out.brp_target;
+        else pc_wdata_ex = pc_ex.pc_wdata;
+
+        unique case (opcode_if == op_jal || opcode_if == op_br)
+            1'b1:
             begin
                 pcmux_out = brp_if.brp_target;
-                pc_wdata_id = brp_if.brp_target;
-            end
-            op_br:
-            begin
-                pcmux_out = brp_if.brp_target;
-                pc_wdata_id = brp_if.brp_target;
+                pc_wdata_if = brp_if.brp_target;
             end
             default:
             begin
                 pcmux_out = alupc_out;
-                pc_wdata_id = pc_id.pc + 4;
+                pc_wdata_if = alupc_out;
             end
         endcase
- */
+        flush = '0;
+    end
 
     // ALU MUX #1
     unique case (ctrl_ex.alumux1_sel)

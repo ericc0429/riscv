@@ -15,11 +15,9 @@ import rv32i_types::*;
     
     // For accuracy counter
     input rv32i_brp_word brp_ex,
-    input logic br_en,  // Whether branch was taken from previous prediction
     
     // Outputs brp for current instruction
-    output rv32i_brp_word brp_if,
-    output rv32i_brp_word brp_ex_out
+    output rv32i_brp_word brp_if
 );
 
 logic brp_prediction;
@@ -32,8 +30,8 @@ brp_bimodal bimodal (
     .clk,
     .rst,
     .load   (opcode_if == op_br), // Only use predictor when it's a branch instruction
-    .update (brp_ex_out.predicted && brp_ex_out.mp_valid),
-    .brp_ex (brp_ex_out),
+    .update (brp_ex.predicted && brp_ex.mp_valid),
+    .brp_ex (brp_ex),
 
     .br_prediction (brp_prediction)
 );
@@ -77,7 +75,7 @@ begin : predictor
     endcase
 end
 
-//always_ff @(posedge clk)
+// always_ff @(posedge clk)
 always_comb
 begin : gen_brp_if
     if (rst) brp_if = '0;
@@ -90,20 +88,21 @@ begin : gen_brp_if
     end
 end
 
-always_ff @(posedge clk)
+// always_ff @(posedge clk)
+/* always_comb
 begin : gen_brp_ex_out
-    if (rst) brp_ex_out <= '0;
+    if (rst) brp_ex_out = '0;
     else if (update)
     begin
-        brp_ex_out.predicted <= brp_ex.predicted;
-        brp_ex_out.prediction <= brp_ex.prediction;
-        brp_ex_out.brp_target <= brp_ex.brp_target;
-        brp_ex_out.brp_alt <= brp_ex.brp_alt;
-        brp_ex_out.mp_valid <= '1;
-        brp_ex_out.mispredicted <= (brp_ex.prediction == br_en) ? '0 : '1;
+        brp_ex_out.predicted = brp_ex.predicted;
+        brp_ex_out.prediction = brp_ex.prediction;
+        brp_ex_out.brp_target = brp_ex.brp_target;
+        brp_ex_out.brp_alt = brp_ex.brp_alt;
+        brp_ex_out.mp_valid = '1;
+        brp_ex_out.mispredicted = (brp_ex.prediction == br_en) ? '0 : '1;
     end
-    else brp_ex_out <= brp_ex;
-end
+    else brp_ex_out = brp_ex;
+end */
 
 always_ff @(posedge clk)
 begin : correctness
@@ -117,7 +116,7 @@ begin : correctness
     else if (update)
     begin
         c_total <= c_total + 1;
-        if (brp_ex.prediction == br_en) c_correct <= c_correct + 1;
+        if (brp_ex.mp_valid && brp_ex.mispredicted) c_correct <= c_correct + 1;
     end
 end
 
