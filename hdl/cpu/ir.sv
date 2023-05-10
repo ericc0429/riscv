@@ -33,7 +33,8 @@ assign rs2 = data[24:20];
 assign rd = data[11:7];
 
 //why "=" instead of "<="
-always_ff @(posedge clk)
+//always_ff @(posedge clk)
+always_comb
 begin
     if (rst)
     begin

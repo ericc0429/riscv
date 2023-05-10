@@ -49,7 +49,7 @@ always_comb
 begin
     set_defaults();
     
-    if((rd_ex != '0) && ((rd_ex == rs1_id) || (rd_ex == rs2_id)) && (ctrl_ex.opcode == op_load))
+    if((rd_ex != '0) && ((rd_ex == rs1_id) || (rd_ex == rs2_id)) && (ctrl_ex.opcode == op_load || ctrl_ex.opcode == op_lui))
     begin
         stall();
     end
