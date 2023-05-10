@@ -55,20 +55,7 @@ always_comb begin
     pmem_write = data_write & service;
 end
 
-/* always_ff @(posedge clk) begin
-    case (service)
-        '0: begin
-            pmem_read <= instr_read;
-            // pmem_address = instr_addr;
-        end
-        
-        '1: begin
-            pmem_read <= data_read;
-        end
-    endcase
-end */
-
-always_comb/*_ff @(posedge clk) */ begin
+always_comb begin
     instr_mem_resp = '0;
     data_mem_resp = '0;
 
@@ -83,7 +70,7 @@ always_comb/*_ff @(posedge clk) */ begin
     end
 end
 
-always_comb begin
+always_comb /* ff @(posedge clk) */ begin
     if (instr_read)
         service = '0;
     if (data_read || data_write) 

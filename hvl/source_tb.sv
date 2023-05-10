@@ -3,6 +3,7 @@
 
 `define MAGIC_MEM 0
 `define PARAM_MEM 1
+
 // `define MEMORY `MAGIC_MEM
 `define MEMORY `PARAM_MEM
 
@@ -47,6 +48,10 @@ always @(rvfi.errcode iff (rvfi.errcode != 0)) begin
     $finish;
 end
 
+// always @(posedge rvfi.halt)begin
+//     $finish;
+// end
+
 /************************** End Halting Conditions ***************************/
 `define PARAM_RESPONSE_NS 50 * 10
 `define PARAM_RESPONSE_CYCLES $ceil(`PARAM_RESPONSE_NS / `PERIOD_NS)
@@ -80,10 +85,10 @@ generate
             .rvfi_mode(2'b00),
             .rvfi_rs1_addr(rvfi.rs1_addr),
             .rvfi_rs2_addr(rvfi.rs2_addr),
-            .rvfi_rs1_rdata(rvfi.rs1_addr ? rvfi.rs1_rdata : 0),
-            .rvfi_rs2_rdata(rvfi.rs2_addr ? rvfi.rs2_rdata : 0),
-            .rvfi_rd_addr(rvfi.load_regfile ? rvfi.rd_addr : 0),
-            .rvfi_rd_wdata(rvfi.load_regfile ? rvfi.rd_wdata : 0),
+            .rvfi_rs1_rdata(rvfi.rs1_addr ? rvfi.rs1_rdata : '0),
+            .rvfi_rs2_rdata(rvfi.rs2_addr ? rvfi.rs2_rdata : '0),
+            .rvfi_rd_addr(rvfi.load_regfile ? rvfi.rd_addr : '0),
+            .rvfi_rd_wdata(rvfi.load_regfile ? rvfi.rd_wdata : '0),
             .rvfi_pc_rdata(rvfi.pc_rdata),
             .rvfi_pc_wdata(rvfi.pc_wdata),
             .rvfi_mem_addr({rvfi.mem_addr[31:2], 2'b0}),

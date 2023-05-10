@@ -28,127 +28,165 @@ import rv32i_types::*;
 
 /* ================ INTERNAL SIGNALS ================ */
 
+// rv32i_word  addr_aligned_wr;
+
+/* === MASKS AND TRAP === */
+logic [3:0] wmask_wb;
+logic [3:0] rmask_mem;
+logic [3:0] rmask_wb;
+
+logic trap_mem;
+logic trap_wb;
+
 /* === Stage Register Loads === */
 logic load_if_id;
 logic load_id_ex;
 logic load_ex_mem;
-logic load_mem_wr;
+logic load_mem_wb;
 
 stall_debug sd; // Debug stalling
 
-// assign load_ex_mem = 1'b1;
-// assign load_mem_wr = 1'b1;
+logic cur_stall;
+logic cur_stall_wb;
 
 /* === PC signals === */
 logic load_pc;
-// assign load_pc = 1'b1; // Comment out later
 rv32i_word pcmux_out;
 rv32i_word pc_if;
 rv32i_word pc_id;
 rv32i_word pc_ex;
+rv32i_word pc_wdata_ex;
 rv32i_word pc_mem;
-rv32i_word pc_wr;
+rv32i_word pc_wb;
 
-/* === regfile signals === */
-rv32i_word regfilemux_out;
-
-// register indexes
-rv32i_reg rs1;
-rv32i_reg rs2;
-rv32i_reg rs1_ex;
-rv32i_reg rs2_ex;
-
-rv32i_reg rd_id;
-rv32i_reg rd_ex;
-rv32i_reg rd_mem;
-rv32i_reg rd_wr;
-
-// register data
-rv32i_word rs1_data;
-rv32i_word rs2_data;
-rv32i_word rs1_data_ex;
-rv32i_word rs2_data_ex;
-rv32i_word rs1_data_final;      // either chose fwd val or curr reg val
-rv32i_word rs2_data_final;
-
-/* === immediates === */
-rv32i_word i_imm;
-rv32i_word s_imm;
-rv32i_word b_imm;
-rv32i_word u_imm;
-rv32i_word j_imm;
-
-rv32i_word i_imm_ex;
-rv32i_word s_imm_ex;
-rv32i_word b_imm_ex;
-rv32i_word u_imm_ex;
-rv32i_word j_imm_ex;
-
-rv32i_word u_imm_mem;
-rv32i_word u_imm_wr;
-
-/* === ALU signals === */
-rv32i_word alupc_out;
-rv32i_word alu_out;
-rv32i_word alu_out_mem;
-rv32i_word alu_out_wr;
-rv32i_word alumux1_out;
-rv32i_word alumux2_out;
-
-/* === CMP signals === */
-rv32i_word cmpmux_out;
+/* === ir signals === */
+logic load_ir;
+assign load_ir = instr_mem_resp;
 
 /* === Control ROM signals === */ 
 rv32i_control_word ctrl;
 rv32i_control_word ctrl_id;
 rv32i_control_word ctrl_ex;
 rv32i_control_word ctrl_mem;
-rv32i_control_word ctrl_wr;
+rv32i_control_word ctrl_wb;
 logic ctrlmux_sel;
 
+/* === Reg Word === */
+rv32i_reg_word regs_if;
+rv32i_reg_word regs_id;
+rv32i_reg_word regs_id_data;
+rv32i_reg_word regs_ex;
+rv32i_reg_word regs_ex_fwd;
+rv32i_reg_word regs_mem;
+rv32i_reg_word regs_wb;
+/* === regfile signals === */
+rv32i_word regfilemux_out;
+
+// IF signals
+rv32i_word instr_if;
+rv32i_opcode opcode_if;
+logic [2:0] funct3_if;
+logic [6:0] funct7_if;
+
+// ID signals
+rv32i_word instr_id;
 rv32i_opcode opcode;
 logic [2:0] funct3;
 logic [6:0] funct7;
 
+// register data
+rv32i_word rs1_data;    // Regfile output into regs_id_data
+rv32i_word rs2_data;
+rv32i_word rs1_data_final;      // either chose fwd val or curr reg val
+rv32i_word rs2_data_final;
+
+rv32i_word u_imm_mem;
+rv32i_word u_imm_wb;
+
+/* === ALU signals === */
+rv32i_word alupc_out;
+rv32i_word alu_out;
+rv32i_word alu_out_mem;
+rv32i_word alu_out_wb;
+rv32i_word alumux1_out;
+rv32i_word alumux2_out;
+
+/* === CMP signals === */
+rv32i_word cmpmux_out;
+
 /* === branching === */
 logic br_en;
 logic br_en_mem;
-logic br_en_wr;
+logic br_en_wb;
 
 /* === BIT SHIFTING/ALIGNMENT === */
 rv32i_word wdata_out_final;
 assign data_mem_wdata = wdata_out_final << (8 * alu_out_mem[1:0]);
 
 logic pc_sel;   // br_en that only gets set if we are indeed branching
-assign pc_sel = br_en & ctrl_ex.br_sel;
+assign pc_sel = (br_en || (ctrl_ex.opcode == op_jal || ctrl_ex.opcode == op_jalr)) & ctrl_ex.br_sel;
+
+/* ================ STALL LOGIC ================ */
+logic stall_pipeline;
+logic instr_stall;
+logic data_stall;
+
+assign instr_stall = !instr_mem_resp && (instr_read);
+assign data_stall = !data_mem_resp && (data_read || data_write);
+assign stall_pipeline = instr_stall || data_stall;
+
 
 /* === branch prediction === */
 logic flush;    // for branch prediction
 // static branch-not-taken predictor logic -- if branch taken, flush IF/ID & ID/EX
-assign flush = pc_sel; 
+assign flush = pc_sel && !stall_pipeline; 
 
 
 /* === forwarding unit === */
 logic rs1_fwdflag;
 logic rs2_fwdflag;
-logic rs2_fwdflag_mem;
+logic rs2_fwdflag_mem1b;    // rs2_fwdflag_mem1behind
+logic rs2_fwdflag_mem2b;    // rs2_fwdflag_mem2behind
+logic rs2_2b_n1b;           // rs2_2behind_now1behind
+rv32i_word regmux_mem;
 rv32i_word rs1_fwd;
 rv32i_word rs2_fwd;
 
 /* ================ MEMORY SIGNALS ================ */
-rv32i_word rdata_wr;
-rv32i_word data_addr_wr;
+rv32i_word rdata_wb;
+rv32i_word data_addr_wb;
 rv32i_word orig_addr;
-rv32i_word orig_addr_wr;
+rv32i_word orig_addr_wb;
 logic [1:0] bit_shift_mem;
-logic [1:0] bit_shift_wr;
+logic [1:0] bit_shift_wb;
 
 rv32i_word wdata_out;
+rv32i_word wdata_wb;
 
 assign instr_read = '1;     // just cp1 (always fetching)
 assign data_read = ctrl_mem.mem_read;
 assign data_write = ctrl_mem.mem_write;
 assign instr_mem_address = pc_if;
+
+/* ================ PREDICTOR ================ */
+logic load_brp;
+assign load_brp = (opcode_if == op_jal || opcode_if == op_br);
+rv32i_brp_word brp_if;
+rv32i_brp_word brp_id;
+rv32i_brp_word brp_ex;
+
+/*
+brp PREDICTOR (
+    .clk,
+    .rst,
+    .load   (load_brp),
+    // Inputs
+    .regs_if,
+
+    // Outputs
+    .brp_if
+);
+*/
 
 /* ================ REGISTERS ================ */
 
@@ -163,13 +201,33 @@ pc_register PC (
 regfile regfile (
     .clk,
     .rst,
-    .load   (ctrl_wr.load_regfile),
+    .load   (ctrl_wb.load_regfile),
     .in     (regfilemux_out),
-    .src_a  (rs1),
-    .src_b  (rs2),
-    .dest   (rd_wr),
+    .use_rd (ctrl_wb.use_rd),
+    .src_a  (regs_id.rs1),
+    .src_b  (regs_id.rs2),
+    .dest   (regs_wb.rd),
     .reg_a  (rs1_data),
     .reg_b  (rs2_data)
+);
+
+ir IR(
+    .clk    (clk),
+    .rst    (rst || flush),
+    .load   (load_if_id),
+    .in     (instr_mem_rdata),
+
+    .rs1    (regs_if.rs1),
+    .rs2    (regs_if.rs2),
+    .rd     (regs_if.rd),
+    .i_imm  (regs_if.i_imm),
+    .s_imm  (regs_if.s_imm),
+    .b_imm  (regs_if.b_imm),
+    .u_imm  (regs_if.u_imm),
+    .j_imm  (regs_if.j_imm),
+    .opcode (opcode_if),
+    .funct3 (funct3_if),
+    .funct7 (funct7_if)
 );
 
 /* ================ ALU / CMP ================ */
@@ -190,7 +248,7 @@ alu ALU (
 
 cmp CMP (
     .cmpop  (ctrl_ex.cmpop),
-    .a      (rs1_data_final),
+    .a      (regs_ex_fwd.rs1_data/* rs1_data_final */),
     .b      (cmpmux_out),
     .f      (br_en)
 );
@@ -201,30 +259,25 @@ control_rom CONTROL_ROM (.*);
 
 /* ================ STAGE REGISTERS ================ */
 reg_if_id IF_ID (
-    // inputs
     .clk,
-    .rst    (rst || flush),
-    .load   (load_if_id),
+    .rst        (rst || flush),
+    .load       (load_if_id),
 
-    .instr  (instr_mem_rdata),
-    .pc_in  (pc_if),
+    // Inputs
+    .pc_if,
+    .instr_if   (instr_mem_rdata),
+    .opcode_if,
+    .funct3_if,
+    .funct7_if,
+    .regs_if,
 
-    // outputs
-    .opcode,
-    .funct3,
-    .funct7,
- 
-    .pc_out (pc_id),
-    
-    .rs1,
-    .rs2,
-    .rd     (rd_id),
-    
-    .i_imm,
-    .s_imm,
-    .b_imm,
-    .u_imm,
-    .j_imm   
+    // Outputs
+    .pc_id,
+    .instr_id,
+    .opcode_id  (opcode),
+    .funct3_id  (funct3),
+    .funct7_id  (funct7),
+    .regs_id
 );
 
 reg_id_ex ID_EX (
@@ -232,111 +285,103 @@ reg_id_ex ID_EX (
     .rst        (rst || flush),
     .load       (load_id_ex),
 
-    .ctrl_word  (ctrl_id),
-    .pc         (pc_id),
+    // Inputs
+    .pc_id,
+    .ctrl_id,
+    .regs_id    (regs_id_data),
 
-    .rs1,                       // reg indexes
-    .rs2,
-    .rd         (rd_id),
-
-    .rs1_data,                  // reg data
-    .rs2_data,
-
-    .i_imm,
-    .s_imm,
-    .b_imm,
-    .u_imm,
-    .j_imm, 
-
-    // outputs
-    .ctrl_word_out  (ctrl_ex),
-    .pc_out         (pc_ex),
-
-    .rs1_out        (rs1_ex),
-    .rs2_out        (rs2_ex),
-    .rd_out         (rd_ex),
-
-    .rs1_data_out   (rs1_data_ex),
-    .rs2_data_out   (rs2_data_ex),
-
-    .i_imm_out  (i_imm_ex),
-    .s_imm_out  (s_imm_ex),
-    .b_imm_out  (b_imm_ex),
-    .u_imm_out  (u_imm_ex),
-    .j_imm_out  (j_imm_ex)
+    // Outputs
+    .pc_ex,
+    .ctrl_ex,
+    .regs_ex
 );
 
 reg_ex_mem EX_MEM (
     .clk,
     .rst,
-    .load           (load_ex_mem),
+    .load       (load_ex_mem),
 
-    .ctrl_word      (ctrl_ex),
-    .pc             (alu_out),
-    .br_en,
-
-    .rd             (rd_ex),
+    // Inputs
+    .pc_ex      (pc_wdata_ex),
+    .ctrl_ex,
+    .regs_ex    (regs_ex_fwd),
+    .br_en_ex   (br_en),
 
     .alu_res        (alu_out),
-    .write_data     (rs2_data_ex),
-    .u_imm          (u_imm_ex),
+    .write_data     (regs_ex.rs2_data),
 
-    // outputs
-    .ctrl_word_out  (ctrl_mem),
-    .pc_out         (pc_mem),
-    .br_en_out      (br_en_mem),
+    .fwd_flag_ex    (rs2_fwdflag_mem2b),
+    .regmux_ex      (regfilemux_out),
 
-    .rd_out         (rd_mem),
+    // Outputs
+    .pc_mem,
+    .ctrl_mem,
+    .regs_mem,
+    .br_en_mem,
 
     .addr_aligned   (data_mem_address),
     .alu_res_out    (alu_out_mem),
     .bit_shift      (bit_shift_mem),
     .mem_byte_enable(data_mbe),
 
+    .rmask_out      (rmask_mem),
+    .trap_out       (trap_mem),
     .write_data_out (wdata_out),
-    .u_imm_out      (u_imm_mem)
+
+    .fwd_flag_mem   (rs2_2b_n1b),
+    .regmux_mem
 );
 
-reg_mem_wr MEM_WR (
+reg_mem_wb MEM_WB (
     .clk,
     .rst,
-    .load           (load_mem_wr),
+    .load           (load_mem_wb),
 
-    .ctrl_word      (ctrl_mem),
-    .pc             (pc_mem),
-    .br_en          (br_en_mem),
+    .pc_mem,
+    .ctrl_mem,
+    .regs_mem,
+    .br_en_mem,
 
-    .rd             (rd_mem),
-    
     .mem_rdata      (data_mem_rdata),
     .alu_res        (alu_out_mem),
     .bit_shift      (bit_shift_mem),
 
-    .u_imm          (u_imm_mem),
+    .write_data     (data_mem_wdata),
+    .wmask_in       (data_mbe),
+    .rmask_in       (rmask_mem),
+    .trap_in        (trap_mem),
+    .cur_stall_in   (cur_stall),
 
     // outputs
-    .ctrl_word_out  (ctrl_wr),
-    .pc_out         (pc_wr),
-    .br_en_out      (br_en_wr),
+    .pc_wb,
+    .ctrl_wb,
+    .regs_wb,
+    .br_en_wb,
 
-    .rd_out         (rd_wr),
+    .mem_rdata_out  (rdata_wb),
+    .alu_res_out    (alu_out_wb),
+    .bit_shift_out  (bit_shift_wb),
 
-    .mem_rdata_out  (rdata_wr),
-    .alu_res_out    (alu_out_wr),
-    .bit_shift_out  (bit_shift_wr),
-
-    .u_imm_out      (u_imm_wr)
+    .write_data_out (wdata_wb),
+    .wmask_out      (wmask_wb),
+    .rmask_out      (rmask_wb),
+    .trap_out       (trap_wb),
+    .cur_stall_out  (cur_stall_wb)
 );
 
 /* ================ FORWARDING UNIT ================ */
 fwd_unit FWD_UNIT (
     // inputs
-    .rd_wr,
-    .rd_mem,
-    .rs1             (rs1_ex),
-    .rs2             (rs2_ex),
+    .rd_wb  (regs_wb.rd),
+    .rd_mem (regs_mem.rd),
+    .rs1_ex (regs_ex.rs1),
+    .rs2_ex (regs_ex.rs2),
+    .rs2_mem(regs_mem.rs2),
 
-    .rdata_wr,
+    .use_rd_mem     (ctrl_mem.use_rd),
+    .use_rd_wb      (ctrl_wb.use_rd),
+
+    .rdata_wb,
     .alu_out_mem,     // alu output being propagated
     .regfilemux_out,
 
@@ -347,138 +392,163 @@ fwd_unit FWD_UNIT (
     // outputs
     .rs1_fwdflag,
     .rs2_fwdflag,
-    .rs2_fwdflag_mem,
+    .rs2_fwdflag_mem1b,
+    .rs2_fwdflag_mem2b,
     .rs1_fwd,
     .rs2_fwd
 );
 
-/* ================ STALL LOGIC ================ */
-logic stall_pipeline;
-logic instr_stall;
-logic data_stall;
-
-assign instr_stall = !instr_mem_resp && (instr_read);
-assign data_stall = !data_mem_resp && (data_read || data_write);
-assign stall_pipeline = instr_stall || data_stall;
-
 /* ================ HAZARD DETECTION UNIT ================ */
-hazard_detection_unit HDU (
+hdu HDU (
     .ctrl_ex,
-    .rs1,
-    .rs2,
+    .rs1_id     (regs_id.rs1),
+    .rs2_id     (regs_id.rs2),
+    .rd_ex      (regs_ex.rd),
     .stall_pipeline,
-    .rd_ex,
     .ctrlmux_sel,
     .load_if_id,
     .load_id_ex,
     .load_ex_mem,
-    .load_mem_wr,
+    .load_mem_wb,
     .load_pc,
+    .cur_stall,
 
     .sd
 );
+
+always_comb begin : ID_REG_UPDATE
+    // Passes values from regs_id to regs_id_data.
+    // Allows us to have the regfile update the rs1_data and rs2_data fields.
+    regs_id_data.rs1        = regs_id.rs1;
+    regs_id_data.rs2        = regs_id.rs2;
+    regs_id_data.rd         = regs_id.rd;
+    regs_id_data.rs1_data   = rs1_data;
+    regs_id_data.rs2_data   = rs2_data;
+    regs_id_data.i_imm      = regs_id.i_imm;
+    regs_id_data.s_imm      = regs_id.s_imm;
+    regs_id_data.b_imm      = regs_id.b_imm;
+    regs_id_data.u_imm      = regs_id.u_imm;
+    regs_id_data.j_imm      = regs_id.j_imm;
+end
+
+always_comb begin : EX_REG_UPDATE
+    regs_ex_fwd.rs1        = regs_ex.rs1;
+    regs_ex_fwd.rs2        = regs_ex.rs2;
+    regs_ex_fwd.rd         = regs_ex.rd;
+    regs_ex_fwd.rs1_data   = rs1_data_final;
+    regs_ex_fwd.rs2_data   = rs2_data_final;
+    regs_ex_fwd.i_imm      = regs_ex.i_imm;
+    regs_ex_fwd.s_imm      = regs_ex.s_imm;
+    regs_ex_fwd.b_imm      = regs_ex.b_imm;
+    regs_ex_fwd.u_imm      = regs_ex.u_imm;
+    regs_ex_fwd.j_imm      = regs_ex.j_imm;
+end
 
 /* ================ MUXES ================ */
 always_comb begin : MUXES
 
     // CTRL MUX -- either sends along control word from control ROM or 0
     unique case (ctrlmux_sel)
-        '0: ctrl_id = ctrl;
-        '1: ctrl_id = '0;
+        1'b0: ctrl_id = ctrl;
+        1'b1: ctrl_id = '0;
         default: ctrl_id = ctrl;
     endcase
 
     // FWD MUX #1 (choose forwarded or current value for rs1)
     unique case (rs1_fwdflag)
-        '0: rs1_data_final = rs1_data_ex;
-        '1: rs1_data_final = rs1_fwd;
-        default: rs1_data_final = rs1_data_ex;
+        1'b1: rs1_data_final = rs1_fwd;
+        default: rs1_data_final = regs_ex.rs1_data;
     endcase
 
     // FWD MUX #2 (choose forwarded or current value for rs2)
     unique case (rs2_fwdflag)
-        '0: rs2_data_final = rs2_data_ex;
-        '1: rs2_data_final = rs2_fwd;
-        default: rs2_data_final = rs2_data_ex;
+        1'b1: rs2_data_final = rs2_fwd;
+        default: rs2_data_final = regs_ex.rs2_data;
     endcase
 
     // FWD MUX #3 (choose which write data to send -> mem)
-    unique case (rs2_fwdflag_mem)
-        '0: wdata_out_final = wdata_out; 
-        '1: wdata_out_final = regfilemux_out;
+    unique case ({rs2_2b_n1b, rs2_fwdflag_mem1b})
+        2'b01: wdata_out_final = regfilemux_out;
+        2'b10: wdata_out_final = regmux_mem;
         default: wdata_out_final = wdata_out;
     endcase
 
     // CMP MUX #1
     unique case (ctrl_ex.cmpmux_sel)
-        cmpmux::rs2_out: cmpmux_out = rs2_data_final;
-        cmpmux::i_imm:   cmpmux_out = i_imm_ex;
-        default: cmpmux_out = i_imm_ex;
+        cmpmux::rs2_out: cmpmux_out = regs_ex_fwd.rs2_data;
+        default: cmpmux_out = regs_ex_fwd.i_imm;
     endcase
 
     // PC MUX
     unique case (pc_sel)
-        1'b0: pcmux_out = alupc_out;
-        1'b1: pcmux_out = alu_out;
-        default: pcmux_out = alupc_out;
+        1'b1:
+        begin
+            pcmux_out = alu_out;
+            pc_wdata_ex = alu_out;
+        end
+        default:
+        begin
+            pcmux_out = alupc_out;
+            pc_wdata_ex = ctrl_ex.pc+4;
+        end
     endcase
 
     // ALU MUX #1
     unique case (ctrl_ex.alumux1_sel)
-        alumux::rs1_out: alumux1_out = rs1_data_final;
+        alumux::rs1_out: alumux1_out = regs_ex_fwd.rs1_data;
         alumux::pc_out: alumux1_out = pc_ex;
         default: alumux1_out = pc_ex;
     endcase
     
     // ALU MUX #2
     unique case (ctrl_ex.alumux2_sel)
-        alumux::i_imm:      alumux2_out = i_imm_ex;
-        alumux::u_imm:      alumux2_out = u_imm_ex;
-        alumux::b_imm:      alumux2_out = b_imm_ex;
-        alumux::s_imm:      alumux2_out = s_imm_ex;
-        alumux::j_imm:      alumux2_out = j_imm_ex;
-        alumux::rs2_out:    alumux2_out = rs2_data_final;
-        default: alumux2_out = i_imm_ex;
+        alumux::i_imm:      alumux2_out = regs_ex_fwd.i_imm;
+        alumux::s_imm:      alumux2_out = regs_ex_fwd.s_imm;
+        alumux::b_imm:      alumux2_out = regs_ex_fwd.b_imm;
+        alumux::u_imm:      alumux2_out = regs_ex_fwd.u_imm;
+        alumux::j_imm:      alumux2_out = regs_ex_fwd.j_imm;
+        alumux::rs2_out:    alumux2_out = regs_ex_fwd.rs2_data;
+        default:            alumux2_out = regs_ex_fwd.i_imm;
     endcase
 
     // REGFILE MUX
-    unique case (ctrl_wr.regfilemux_sel)
-        regfilemux::alu_out: regfilemux_out = alu_out_wr;
-        regfilemux::br_en:   regfilemux_out = {31'b0, br_en_wr};
-        regfilemux::u_imm:   regfilemux_out = u_imm_wr;
-        regfilemux::lw:      regfilemux_out = rdata_wr;
+    unique case (ctrl_wb.regfilemux_sel)
+        regfilemux::alu_out: regfilemux_out = alu_out_wb;
+        regfilemux::br_en:   regfilemux_out = {31'b0, br_en_wb};
+        regfilemux::u_imm:   regfilemux_out = regs_wb.u_imm;
+        regfilemux::lw:      regfilemux_out = rdata_wb;
 
-        regfilemux::pc_plus4: regfilemux_out = pc_wr + 4;
+        regfilemux::pc_plus4: regfilemux_out = ctrl_wb.pc + 4;
         regfilemux::lb: begin
-            case(bit_shift_wr)
-                2'b00: regfilemux_out = {{24{rdata_wr[7]}},rdata_wr[7:0]};
-                2'b01: regfilemux_out = {{24{rdata_wr[15]}},rdata_wr[15:8]};
-                2'b10: regfilemux_out = {{24{rdata_wr[23]}},rdata_wr[23:16]};
-                2'b11: regfilemux_out = {{24{rdata_wr[31]}},rdata_wr[31:24]};
-                default: regfilemux_out = {{24{rdata_wr[7]}},rdata_wr[7:0]};
+            case(bit_shift_wb)
+                2'b00: regfilemux_out = {{24{rdata_wb[7]}},rdata_wb[7:0]};
+                2'b01: regfilemux_out = {{24{rdata_wb[15]}},rdata_wb[15:8]};
+                2'b10: regfilemux_out = {{24{rdata_wb[23]}},rdata_wb[23:16]};
+                2'b11: regfilemux_out = {{24{rdata_wb[31]}},rdata_wb[31:24]};
+                default: regfilemux_out = {{24{rdata_wb[7]}},rdata_wb[7:0]};
             endcase
         end
         regfilemux::lbu: begin
-            case(bit_shift_wr)
-                2'b00: regfilemux_out = {24'd0,rdata_wr[7:0]};
-                2'b01: regfilemux_out = {24'd0,rdata_wr[15:8]};
-                2'b10: regfilemux_out = {24'd0,rdata_wr[23:16]};
-                2'b11: regfilemux_out = {24'd0,rdata_wr[31:24]};
-                default: regfilemux_out = {24'd0,rdata_wr[7:0]};
+            case(bit_shift_wb)
+                2'b00: regfilemux_out = {24'd0,rdata_wb[7:0]};
+                2'b01: regfilemux_out = {24'd0,rdata_wb[15:8]};
+                2'b10: regfilemux_out = {24'd0,rdata_wb[23:16]};
+                2'b11: regfilemux_out = {24'd0,rdata_wb[31:24]};
+                default: regfilemux_out = {24'd0,rdata_wb[7:0]};
             endcase
         end
         regfilemux::lh:  begin
-            case(bit_shift_wr)
-                2'b00: regfilemux_out = {{16{rdata_wr[15]}},rdata_wr[15:0]};
-                2'b10: regfilemux_out = {{16{rdata_wr[31]}},rdata_wr[31:16]};
-                default: regfilemux_out = {{16{rdata_wr[15]}},rdata_wr[15:0]};
+            case(bit_shift_wb)
+                2'b00: regfilemux_out = {{16{rdata_wb[15]}},rdata_wb[15:0]};
+                2'b10: regfilemux_out = {{16{rdata_wb[31]}},rdata_wb[31:16]};
+                default: regfilemux_out = {{16{rdata_wb[15]}},rdata_wb[15:0]};
             endcase
         end
         regfilemux::lhu: begin
-            case(bit_shift_wr)
-                2'b00: regfilemux_out = {16'd0,rdata_wr[15:0]};
-                2'b10: regfilemux_out = {16'd0,rdata_wr[31:16]};
-                default: regfilemux_out = {16'd0,rdata_wr[15:0]};
+            case(bit_shift_wb)
+                2'b00: regfilemux_out = {16'd0,rdata_wb[15:0]};
+                2'b10: regfilemux_out = {16'd0,rdata_wb[31:16]};
+                default: regfilemux_out = {16'd0,rdata_wb[15:0]};
             endcase
         end
 

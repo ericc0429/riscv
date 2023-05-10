@@ -2,12 +2,16 @@ module fwd_unit
 import rv32i_types::*;
 (
     // inputs
-    input rv32i_reg rd_wr,
+    input rv32i_reg rd_wb,
     input rv32i_reg rd_mem,
-    input rv32i_reg rs1,
-    input rv32i_reg rs2,
+    input rv32i_reg rs1_ex,
+    input rv32i_reg rs2_ex,
+    input rv32i_reg rs2_mem,
 
-    input rv32i_word rdata_wr,
+    input logic use_rd_mem,
+    input logic use_rd_wb,
+
+    input rv32i_word rdata_wb,
     input rv32i_word alu_out_mem,     // alu output being propagated
     input rv32i_word regfilemux_out,
 
@@ -18,68 +22,80 @@ import rv32i_types::*;
     // outputs
     output logic rs1_fwdflag,
     output logic rs2_fwdflag,
-    output logic rs2_fwdflag_mem,
+    output logic rs2_fwdflag_mem1b,
+    output logic rs2_fwdflag_mem2b,
     output rv32i_word rs1_fwd,
     output rv32i_word rs2_fwd
 );
 
 // see if we stalled (have a bubble)
 logic fwd_data;
-always_comb begin : read_after_load
+
+always_comb
+begin : read_after_load
     if (ctrl_ex == '0 && ctrl_mem_opcode == op_load)    // stall occurring
         fwd_data = '1;
     else
         fwd_data = '0;
 end
 
-always_comb begin : rs1_forwarding
+always_comb
+begin : rs1_forwarding
     rs1_fwdflag = '0;
 
-    //check for hazard
-    if (rs1 != '0) begin
-    
-        if(rs1 == rd_mem) begin              // rs1 changes in mem stage (priority)
+    if (rs1_ex != '0)      //check for hazard
+    begin
+        if(rs1_ex == rd_mem && use_rd_mem)     // rs1 changes in mem stage (priority)
+        begin
             rs1_fwd = alu_out_mem;
             rs1_fwdflag  = '1; 
         end
-        else if(rs1 == rd_wr) begin          // rs1 changes in wr stage
+        else if(rs1_ex == rd_wb && use_rd_wb)  // rs1 changes in wr stage
+        begin
             if (fwd_data)
-                rs1_fwd = rdata_wr;
+                rs1_fwd = rdata_wb;
             else
                 rs1_fwd = regfilemux_out;
 
             rs1_fwdflag = '1;
         end
-
     end
 end
 
-always_comb begin : rs2_forwarding
+always_comb
+begin : rs2_forwarding
     rs2_fwdflag = '0;
 
-    if (rs2 != '0) begin
-
-        if(rs2 == rd_mem) begin              // rs2 changes in the mem stage (priority)
+    if (rs2_ex != '0)
+    begin
+        if(rs2_ex == rd_mem && use_rd_mem)     // rs2 changes in the mem stage (priority)
+        begin
             rs2_fwd = alu_out_mem;
             rs2_fwdflag = '1;
         end
-        else if(rs2 == rd_wr) begin          // rs2 changes in the wr stage
-            if (fwd_data)
-                rs2_fwd = rdata_wr;
-            else
-                rs2_fwd = regfilemux_out;
-
+        else if(rs2_ex == rd_wb && use_rd_wb)  // rs2 changes in the wr stage
+        begin
+            if (fwd_data) rs2_fwd = rdata_wb;
+            else rs2_fwd = regfilemux_out;
             rs2_fwdflag = '1;
         end
-
     end
 end
 
-always_comb begin : rs2_forwarding_mem
-    rs2_fwdflag_mem = '0;
+always_comb
+begin : rs2_forwarding_mem
+    rs2_fwdflag_mem1b = '0;
+    rs2_fwdflag_mem2b = '0;
 
-    if ((rd_mem != '0) && (rd_mem == rd_wr)) begin
-        rs2_fwdflag_mem = '1;
+    if (rd_wb != '0)
+    begin
+        if (rd_wb == rs2_mem && use_rd_wb) begin
+            rs2_fwdflag_mem1b = '1;
+        end
+
+        if (rd_wb == rs2_ex && use_rd_wb) begin
+            rs2_fwdflag_mem2b = '1;
+        end
     end
 end
 

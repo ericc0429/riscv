@@ -4,6 +4,8 @@ import rv32i_types::*;
     input rv32i_opcode opcode,
     input logic [2:0] funct3,
     input logic [6:0] funct7,
+    input rv32i_word instr_id,
+    input rv32i_word pc_id, 
     output rv32i_control_word ctrl
 );
 
@@ -22,7 +24,11 @@ function void set_defaults();
     ctrl.mem_read = 1'b0;
     ctrl.mem_write = 1'b0;
     ctrl.br_sel = 1'b0;
-    // ctrl.mem_byte_enable = 4'b1111;
+    // RVFI
+    ctrl.instr = instr_id;
+    ctrl.pc = pc_id;
+    ctrl.valid = 1'b0;
+    ctrl.use_rd = 1'b1;
 endfunction
 
 function void loadRegfile(regfilemux::regfilemux_sel_t sel);
@@ -59,17 +65,20 @@ begin
 
         op_lui:
         begin
+            ctrl.valid = 1'b1;
             loadRegfile(regfilemux::u_imm);
         end
 
         op_auipc:
         begin
+            ctrl.valid = 1'b1;
             setALU(alumux::pc_out, alumux::u_imm, 1'b1, alu_add);   // pc + u_imm
             loadRegfile(regfilemux::alu_out);
         end
 
         op_jal:
         begin
+            ctrl.valid = 1'b1;
             setALU(alumux::pc_out, alumux::j_imm, 1'b1, alu_add);   // pc + j_imm
             loadRegfile(regfilemux::pc_plus4); // Write address of next instruction into rd
             ctrl.br_sel = 1'b1;
@@ -77,6 +86,7 @@ begin
 
         op_jalr:
         begin
+            ctrl.valid = 1'b1;
             setALU(alumux::rs1_out, alumux::i_imm, 1'b1, alu_add);
             loadRegfile(regfilemux::pc_plus4);
             ctrl.br_sel = 1'b1;
@@ -84,15 +94,18 @@ begin
 
         op_br:
         begin
+            ctrl.valid = 1'b1;
             setALU(alumux::pc_out, alumux::b_imm, 1'b1, alu_add);
             setCMP(cmpmux::rs2_out, 1'b1, branch_funct3_t'(funct3));
             ctrl.br_sel = 1'b1;
-            // ctrl.br_sel = '1;
+            ctrl.use_rd = 1'b0;
+
         end
 
         op_load:
         begin
             ctrl.mem_read = 1'b1;
+            ctrl.valid = 1'b1;
             setALU(alumux::rs1_out, alumux::i_imm, 1'b1, alu_add);
             case (load_funct3_t'(funct3))
                 lb: loadRegfile(regfilemux::lb);
@@ -105,17 +118,15 @@ begin
 
         op_store:
         begin
+            ctrl.valid = 1'b1;
             setALU(alumux::rs1_out, alumux::s_imm, 1'b1, alu_add);
             ctrl.mem_write = 1'b1;
-            // case(store_funct3_t'(funct3))
-            //     sw: ctrl.mem_byte_enable = 4'b1111;
-            //     sh: ctrl.mem_byte_enable = 4'b1111;
-            //     sb: ctrl.mem_byte_enable = 4'b1111;
-            // endcase
+            ctrl.use_rd = 1'b0;
         end
 
         op_imm:
         begin
+            ctrl.valid = 1'b1;
             case (arith_funct3_t'(funct3))
                 // add:    // addi
                 // sll:    // slli
@@ -154,6 +165,7 @@ begin
 
         op_reg:
         begin
+            ctrl.valid = 1'b1;
             case (arith_funct3_t'(funct3))
                 // add/sub -- check bit30 for sub if op_reg opcode
                 add:
