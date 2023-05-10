@@ -30,7 +30,7 @@ brp_bimodal bimodal (
     .clk,
     .rst,
     .load   (opcode_if == op_br), // Only use predictor when it's a branch instruction
-    .update (brp_ex.predicted && brp_ex.mp_valid),
+    .update (update/* brp_ex.predicted && brp_ex.mp_valid */),
     .brp_ex (brp_ex),
 
     .br_prediction (brp_prediction)
@@ -116,7 +116,7 @@ begin : correctness
     else if (update)
     begin
         c_total <= c_total + 1;
-        if (brp_ex.mp_valid && brp_ex.mispredicted) c_correct <= c_correct + 1;
+        if (brp_ex.mp_valid && !brp_ex.mispredicted) c_correct <= c_correct + 1;
     end
 end
 

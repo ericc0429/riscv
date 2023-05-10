@@ -1,10 +1,11 @@
 module hdu
 import rv32i_types::*;
 (
+    input rv32i_control_word ctrl_id,
     input rv32i_control_word ctrl_ex,
-    input rv32i_reg rs1_id,
-    input rv32i_reg rs2_id,
-    input rv32i_reg rd_ex,
+    input rv32i_reg_word regs_if,
+    input rv32i_reg_word regs_id,
+    input rv32i_reg_word regs_ex,
     input logic stall_pipeline,
     output logic ctrlmux_sel,
     output logic load_if_id,
@@ -35,6 +36,12 @@ function void stall(); // Read after load stall
     sd = read_after_load;
 endfunction
 
+/* function void brp_stall(); // Branching immediately after modifying one of its sources
+    ctrlmux_sel = '1;
+    load_if_id = '0;
+    load_pc = '0;
+endfunction */
+
 function void mem_stall ();
     load_pc     = '0;
     load_if_id  = '0;
@@ -49,10 +56,18 @@ always_comb
 begin
     set_defaults();
     
-    if((rd_ex != '0) && ((rd_ex == rs1_id) || (rd_ex == rs2_id)) && (ctrl_ex.opcode == op_load || ctrl_ex.opcode == op_lui))
+    if ((regs_ex.rd != '0)
+        && ((regs_ex.rd == regs_id.rs1) || (regs_ex.rd == regs_id.rs2))
+        && (ctrl_ex.opcode == op_load || ctrl_ex.opcode == op_lui))
     begin
         stall();
     end
+    /* if ((regs_id.rd != '0)
+        && ((regs_id.rd == regs_if.rs1) || (regs_id.rd == regs_if.rs2))
+        && ((ctrl_id.opcode == op_load || ctrl_id.opcode == op_lui)))
+    begin
+        stall();
+    end */
     if (stall_pipeline)
     begin
         mem_stall();

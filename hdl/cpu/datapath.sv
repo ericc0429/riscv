@@ -181,7 +181,7 @@ assign instr_mem_address = pc_if.pc;
 
 /* ================ PREDICTOR ================ */
 logic load_brp;
-assign load_brp = (opcode_if == op_jal || opcode_if == op_br) && !stall_pipeline;
+assign load_brp = (opcode_if == op_jal || opcode_if == op_br) && load_pc && !stall_pipeline;
 rv32i_brp_word brp_if;
 rv32i_brp_word brp_id;
 rv32i_brp_word brp_ex;
@@ -195,7 +195,7 @@ brp PREDICTOR (
     .clk,
     .rst,
     .load   (load_brp),
-    .update (ctrl_ex.opcode == op_br),
+    .update (ctrl_ex.opcode == op_br && !stall_pipeline),
     
     // Inputs
     .pc_if  (pc_if.pc),
@@ -423,10 +423,11 @@ fwd_unit FWD_UNIT (
 
 /* ================ HAZARD DETECTION UNIT ================ */
 hdu HDU (
+    .ctrl_id,
     .ctrl_ex,
-    .rs1_id     (regs_id.rs1),
-    .rs2_id     (regs_id.rs2),
-    .rd_ex      (regs_ex.rd),
+    .regs_if,
+    .regs_id    (regs_id_data),
+    .regs_ex    (regs_ex_fwd),
     .stall_pipeline,
     .ctrlmux_sel,
     .load_if_id,
@@ -539,21 +540,30 @@ always_comb begin : MUXES
 
     // New PC MUX
     if (mispredicted)
-    begin
-        // Mispredicted; flush pipeline and reset to other branch target addr
+    begin   // Mispredicted; flush pipeline and reset to other branch target addr
         pcmux_out = brp_ex_out.brp_alt;
         pc_wdata_ex = brp_ex_out.brp_alt;
         flush = !stall_pipeline; // Don't flush if pipeline is stalled
     end
+    else if (ctrl_ex.opcode == op_jalr)
+    begin   // JALR: We'd have to treat similar to a misprediction
+        pcmux_out = alu_out;
+        pc_wdata_ex = alu_out;
+        flush = !stall_pipeline;
+    end
     else
-    begin
-        // What if we predicted correctly? We need to update pc_wdata_ex still.
+    begin   // What if we predicted correctly? We need to update pc_wdata_ex still.
         if (brp_ex_out.predicted && brp_ex_out.mp_valid)
             pc_wdata_ex = brp_ex_out.brp_target;
         else pc_wdata_ex = pc_ex.pc_wdata;
 
-        unique case (opcode_if == op_jal || opcode_if == op_br)
-            1'b1:
+        unique case (opcode_if)
+            op_jal:
+            begin
+                pcmux_out = brp_if.brp_target;
+                pc_wdata_if = brp_if.brp_target;
+            end
+            op_br:
             begin
                 pcmux_out = brp_if.brp_target;
                 pc_wdata_if = brp_if.brp_target;
