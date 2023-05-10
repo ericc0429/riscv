@@ -105,6 +105,14 @@ typedef struct packed {
     rv32i_word j_imm;
 } rv32i_reg_word;
 
+typedef struct packed {
+    logic predicted;        // Flag for instruction being branch or jump
+    logic prediction;       // Prediction value
+    rv32i_word brp_target;  // Predicted next address
+    rv32i_word brp_alt;     // Alternate address in case of misprediction
+    logic mispredicted;     // Set in EX stage, if br_en_ex != prediction
+} rv32i_brp_word;
+
 typedef enum bit [1:0] {
     no_stall        = 2'b00,
     read_after_load = 2'b01,

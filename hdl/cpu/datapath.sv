@@ -49,7 +49,6 @@ stall_debug sd; // Debug stalling
 logic cur_stall;
 logic cur_stall_wb;
 
-
 /* === PC signals === */
 logic load_pc;
 rv32i_word pcmux_out;
@@ -64,10 +63,15 @@ rv32i_word pc_wb;
 logic load_ir;
 assign load_ir = instr_mem_resp;
 
-/* === regfile signals === */
-rv32i_word regfilemux_out;
+/* === Control ROM signals === */ 
+rv32i_control_word ctrl;
+rv32i_control_word ctrl_id;
+rv32i_control_word ctrl_ex;
+rv32i_control_word ctrl_mem;
+rv32i_control_word ctrl_wb;
+logic ctrlmux_sel;
 
-// Reg Data
+/* === Reg Word === */
 rv32i_reg_word regs_if;
 rv32i_reg_word regs_id;
 rv32i_reg_word regs_id_data;
@@ -75,6 +79,8 @@ rv32i_reg_word regs_ex;
 rv32i_reg_word regs_ex_fwd;
 rv32i_reg_word regs_mem;
 rv32i_reg_word regs_wb;
+/* === regfile signals === */
+rv32i_word regfilemux_out;
 
 // IF signals
 rv32i_word instr_if;
@@ -107,14 +113,6 @@ rv32i_word alumux2_out;
 
 /* === CMP signals === */
 rv32i_word cmpmux_out;
-
-/* === Control ROM signals === */ 
-rv32i_control_word ctrl;
-rv32i_control_word ctrl_id;
-rv32i_control_word ctrl_ex;
-rv32i_control_word ctrl_mem;
-rv32i_control_word ctrl_wb;
-logic ctrlmux_sel;
 
 /* === branching === */
 logic br_en;
@@ -166,6 +164,25 @@ assign instr_read = '1;     // just cp1 (always fetching)
 assign data_read = ctrl_mem.mem_read;
 assign data_write = ctrl_mem.mem_write;
 assign instr_mem_address = pc_if;
+
+/* ================ PREDICTOR ================ */
+logic load_brp;
+assign load_brp = (opcode_if == op_jal || opcode_if == op_br);
+rv32i_brp_word brp_if;
+rv32i_brp_word brp_id;
+rv32i_brp_word brp_ex;
+
+
+brp PREDICTOR (
+    .clk,
+    .rst,
+    .load   (load_brp),
+    // Inputs
+    .regs_if,
+
+    // Outputs
+    .brp_if
+);
 
 /* ================ REGISTERS ================ */
 
