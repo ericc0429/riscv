@@ -6,7 +6,7 @@ import rv32i_types::*;
     input logic load,
     input logic update,
 
-    input logic brp_ex,
+    input rv32i_brp_word brp_ex,
 
     output logic br_prediction
 );

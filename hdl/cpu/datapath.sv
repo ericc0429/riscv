@@ -149,7 +149,7 @@ assign stall_pipeline = instr_stall || data_stall;
 /* === branch prediction === */
 logic flush;    // for branch prediction
 // static branch-not-taken predictor logic -- if branch taken, flush IF/ID & ID/EX
-// assign flush = pc_sel && !stall_pipeline; 
+assign flush = pc_sel && !stall_pipeline; 
 
 
 /* === forwarding unit === */
@@ -180,7 +180,7 @@ assign instr_mem_address = pc_if.pc;
 
 /* ================ PREDICTOR ================ */
 logic load_brp;
-assign load_brp = (opcode_if == op_jal || opcode_if == op_br);
+assign load_brp = (opcode_if == op_jal || opcode_if == op_br) && !stall_pipeline;
 rv32i_brp_word brp_if;
 rv32i_brp_word brp_id;
 rv32i_brp_word brp_ex;
@@ -190,7 +190,7 @@ brp PREDICTOR (
     .clk,
     .rst,
     .load   (load_brp),
-    .update (brp_ex.predicted)
+    .update (brp_ex.predicted),
     
     // Inputs
     .pc_if  (pc_if.pc),
@@ -305,7 +305,7 @@ reg_id_ex ID_EX (
     .pc_id      (pc_id_final),
     .ctrl_id,
     .regs_id    (regs_id_data),
-    .brp_id
+    .brp_id,
 
     // Outputs
     .pc_ex,
@@ -332,7 +332,7 @@ reg_ex_mem EX_MEM (
     .regmux_ex      (regfilemux_out),
 
     // Outputs
-    .pc_mem
+    .pc_mem,
     .ctrl_mem,
     .regs_mem,
     .br_en_mem,
@@ -438,7 +438,7 @@ always_comb begin : ID_WORDS_UPDATE
     // Passes values from pc_id to pc_id_final
     // Allows us to update pc_wdata
     pc_id_final.pc          = pc_id.pc;
-    pc_id_final.pc_wdata    = pc_wdata_id;
+    pc_id_final.pc_wdata    = pc_id.pc;//pc_wdata_id;
     pc_id_final.instr       = pc_id.instr;
 
     // Passes values from regs_id to regs_id_data.
@@ -457,9 +457,9 @@ end
 
 always_comb begin : EX_REG_UPDATE
     pc_ex_final.pc          = pc_ex.pc;
-    if (brp_ex_out.predicted && brp_ex_out.mp_valid && brp_ex_out.mispredicted)
-        pc_ex_final.pc_wdata    = pc_wdata_ex;
-    else pc_ex_final.pc_wdata   = pc_ex.pc_wdata;
+    //if (brp_ex_out.predicted && brp_ex_out.mp_valid && brp_ex_out.mispredicted)
+    pc_ex_final.pc_wdata    = pc_wdata_ex;
+    //else pc_ex_final.pc_wdata   = pc_ex.pc_wdata;
     pc_ex_final.instr       = pc_ex.instr;
 
     regs_ex_fwd.rs1        = regs_ex.rs1;
@@ -510,7 +510,7 @@ always_comb begin : MUXES
     endcase
 
     // PC MUX
-    /* unique case (pc_sel)
+    unique case (pc_sel)
         1'b1:
         begin
             pcmux_out = alu_out;
@@ -519,11 +519,11 @@ always_comb begin : MUXES
         default:
         begin
             pcmux_out = alupc_out;
-            pc_wdata_ex = ctrl_ex.pc+4;
+            pc_wdata_ex = pc_ex.pc+4;
         end
-    endcase */
+    endcase
 
-    // New PC MUX
+/*     // New PC MUX
     if (brp_ex_out.predicted && brp_ex_out.mp_valid && brp_ex_out.mispredicted)
     begin
         // Mispredicted; flush pipeline and reset to ALU out
@@ -549,6 +549,7 @@ always_comb begin : MUXES
                 pc_wdata_id = pc_id.pc + 4;
             end
         endcase
+ */
 
     // ALU MUX #1
     unique case (ctrl_ex.alumux1_sel)

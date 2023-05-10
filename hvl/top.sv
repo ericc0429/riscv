@@ -44,7 +44,7 @@ assign rvfi.rst = itf.rst;
 
 function void set_defaults();
     // Instruction and trap:
-    rvfi.inst = dut.datapath.ctrl_wb.instr;
+    rvfi.inst = dut.datapath.pc_wb.instr;
     rvfi.trap = dut.datapath.trap_wb;
 
     // Regfile:

@@ -47,12 +47,12 @@ function void set_defaults ();
     brp.mispredicted = '0;
 endfunction
 
-function void predict(logic _prediction, rv32i_word base_addr, rv32i_word offset);
+function void predict(logic _prediction, rv32i_word offset);
     // brp_if.predicted = '1;
     brp.prediction = _prediction;
 
-    brp.brp_target = (_prediction) ? (base_addr + offset) : (base_addr + 4);
-    brp.brp_alt = !(_prediction) ? (base_addr + offset) : (base_addr + 4);
+    brp.brp_target = (_prediction) ? (pc_if + offset) : (pc_if + 4);
+    brp.brp_alt = !(_prediction) ? (pc_if + offset) : (pc_if + 4);
 endfunction
 
 
@@ -66,26 +66,27 @@ begin : predictor
         op_jal:
         begin
             brp.predicted = '0;
-            predict(1'b1, pc_if, regs_if.j_imm);
+            predict(1'b1, j_imm);
         end
         
         op_br:
         begin
             brp.predicted = '1;
-            predict(brp_prediction, pc_if, regs_if.b_imm);
+            predict(brp_prediction, b_imm);
         end
     endcase
 end
 
-always_ff @(posedge clk)
+//always_ff @(posedge clk)
+always_comb
 begin : gen_brp_if
-    if (rst) brp_if <= '0;
+    if (rst) brp_if = '0;
     else if (load)
     begin
-        brp_if <= brp;
+        brp_if = brp;
     end
     else begin
-        brp_if <= '0;  // If load isn't high, we still reset instead of keeping the previous brp output
+        brp_if = '0;  // If load isn't high, we still reset instead of keeping the previous brp output
     end
 end
 
