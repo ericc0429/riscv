@@ -5,9 +5,10 @@ import rv32i_types::*;
     input rst,
     input logic load,
 
-    input rv32i_word pc_ex,
+    input rv32i_pc_word pc_ex,
     input rv32i_control_word ctrl_ex,
     input rv32i_reg_word regs_ex,
+    // input rv32i_brp_word brp_ex,
     input logic br_en_ex,
 
     input rv32i_word alu_res,               // represents new pc, address, or operation result
@@ -16,9 +17,10 @@ import rv32i_types::*;
     input logic fwd_flag_ex,
     input rv32i_word regmux_ex,
 
-    output rv32i_word pc_mem,
+    output rv32i_pc_word pc_mem,
     output rv32i_control_word ctrl_mem,
     output rv32i_reg_word regs_mem,
+    // output rv32i_brp_word brp_mem,
     output logic br_en_mem,
 
     output rv32i_word addr_aligned,         // aligned to 4B (i.e. last 2 bits = 00)

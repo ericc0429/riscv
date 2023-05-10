@@ -4,8 +4,7 @@ import rv32i_types::*;
     input rv32i_opcode opcode,
     input logic [2:0] funct3,
     input logic [6:0] funct7,
-    input rv32i_word instr_id,
-    input rv32i_word pc_id, 
+
     output rv32i_control_word ctrl
 );
 
@@ -25,8 +24,6 @@ function void set_defaults();
     ctrl.mem_write = 1'b0;
     ctrl.br_sel = 1'b0;
     // RVFI
-    ctrl.instr = instr_id;
-    ctrl.pc = pc_id;
     ctrl.valid = 1'b0;
     ctrl.use_rd = 1'b1;
 endfunction

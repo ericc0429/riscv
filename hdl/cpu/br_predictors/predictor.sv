@@ -4,43 +4,36 @@ import rv32i_types::*;
     input logic clk,
     input logic rst,
     input logic load,
+    input logic update,
 
-    input rv32i_control_word ctrl,
-    
-    // For accuracy counter
-    input rv32i_control_word ctrl_ex,
-    input logic br_prediction_ex,       // Previous prediction
-    input logic br_en,                  // Whether branch was taken from previous prediction
-    
-
+    // IF instruction data
+    input rv32i_word pc_if,
+    input rv32i_opcode opcode_if,
     // Offsets
     input rv32i_word b_imm,
     input rv32i_word j_imm,
-    input rv32i_opcode opcode_if,
+    
+    // For accuracy counter
     input rv32i_brp_word brp_ex,
-    input rv32i_reg_word regs_if,
-
-    // Outputs the branch target address depending on the prediction, as well as a return target to return to if the prediction was incorrect.
-    output logic prediction,
-    output rv32i_word br_target,
-    output rv32i_word br_ret_target
-    output rv32i_brp_word brp_if
+    input logic br_en,  // Whether branch was taken from previous prediction
+    
+    // Outputs brp for current instruction
+    output rv32i_brp_word brp_if,
+    output rv32i_brp_word brp_ex_out
 );
 
-rv32i_word pc_if;
 logic brp_prediction;
 rv32i_brp_word brp;
 int c_total;    // Total #predictions counter
 int c_correct;  // #correct predictions counter
 
-logic bp_correctness;
-assign bp_correctness = (br_en == br_prediction_ex);
 
 brp_bimodal bimodal (
     .clk,
     .rst,
-    .load (opcode_if == op_br), // Only use predictor when it's a branch instruction
-    .bp_correctness,
+    .load   (opcode_if == op_br), // Only use predictor when it's a branch instruction
+    .update (brp_ex_out.predicted && brp_ex_out.mp_valid),
+    .brp_ex (brp_ex_out),
 
     .br_prediction (brp_prediction)
 );
@@ -50,6 +43,7 @@ function void set_defaults ();
     brp.prediction = '0;
     brp.brp_target = '0;
     brp.brp_alt = '0;
+    brp.mp_valid = '0;
     brp.mispredicted = '0;
 endfunction
 
@@ -61,54 +55,6 @@ function void predict(logic _prediction, rv32i_word base_addr, rv32i_word offset
     brp.brp_alt = !(_prediction) ? (base_addr + offset) : (base_addr + 4);
 endfunction
 
-/* always_ff @(posedge clk)
-begin
-    // Reset Signal
-    if (rst)
-    begin
-        br_target <= ctrl.pc + 4;
-        br_ret_target <= ctrl.pc + 4;
-        prediction <= 1'b0;
-    end
-
-    // INSTR is a branch/jal, so we want prediction output
-    // Not handling JALR instructions because of potential for hazards in RS1
-    else if (load)
-    begin
-        case (ctrl.opcode)
-            op_jal:
-            begin
-                br_target <= ctrl.pc + j_imm;
-                br_ret_target <= ctrl.pc + 4;
-                prediction <= 1'b1;
-            end
-            
-            op_br:
-            begin
-                prediction <= bp_prediction;
-
-                if (bp_prediction)
-                begin
-                    br_target <= ctrl.pc + b_imm;
-                    br_ret_target <= ctrl.pc + 4;
-                end
-
-                else
-                begin
-                    br_target <= ctrl.pc + 4;
-                    br_ret_target <= ctrl.pc + b_imm;
-                end
-            end
-        endcase
-    end
-
-    else
-    begin
-        br_target <= br_target;
-        br_ret_target <= br_ret_target;
-        prediction <= prediction;
-    end
-end */
 
 always_comb
 begin : predictor
@@ -119,24 +65,43 @@ begin : predictor
     case (opcode_if)
         op_jal:
         begin
-            brp.prediction = '0;
+            brp.predicted = '0;
             predict(1'b1, pc_if, regs_if.j_imm);
         end
         
         op_br:
         begin
-            brp.prediction = '1;
+            brp.predicted = '1;
             predict(brp_prediction, pc_if, regs_if.b_imm);
         end
     endcase
 end
 
 always_ff @(posedge clk)
-begin : output_assignment
+begin : gen_brp_if
     if (rst) brp_if <= '0;
-    else if (load) brp_if <= brp;
-    else brp_if <= '0;
+    else if (load)
+    begin
+        brp_if <= brp;
+    end
+    else begin
+        brp_if <= '0;  // If load isn't high, we still reset instead of keeping the previous brp output
+    end
+end
 
+always_ff @(posedge clk)
+begin : gen_brp_ex_out
+    if (rst) brp_ex_out <= '0;
+    else if (update)
+    begin
+        brp_ex_out.predicted <= brp_ex.predicted;
+        brp_ex_out.prediction <= brp_ex.prediction;
+        brp_ex_out.brp_target <= brp_ex.brp_target;
+        brp_ex_out.brp_alt <= brp_ex.brp_alt;
+        brp_ex_out.mp_valid <= '1;
+        brp_ex_out.mispredicted <= (brp_ex.prediction == br_en) ? '0 : '1;
+    end
+    else brp_ex_out <= brp_ex;
 end
 
 always_ff @(posedge clk)
@@ -147,10 +112,11 @@ begin : correctness
         c_total <= 0;
         c_correct <= 0;
     end
-    else if (brp_ex.mispredicted)
+    // We predicted for the instruction in EX stage
+    else if (update)
     begin
         c_total <= c_total + 1;
-        if (bp_correctness) c_correct <= c_correct + 1;
+        if (brp_ex.prediction == br_en) c_correct <= c_correct + 1;
     end
 end
 

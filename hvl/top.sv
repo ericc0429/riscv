@@ -58,8 +58,8 @@ function void set_defaults();
     rvfi.rd_wdata = dut.datapath.regfilemux_out;
 
     // PC:
-    rvfi.pc_rdata = dut.datapath.ctrl_wb.pc;
-    rvfi.pc_wdata = dut.datapath.pc_wb;
+    rvfi.pc_rdata = dut.datapath.pc_wb.pc;
+    rvfi.pc_wdata = dut.datapath.pc_wb.pc_wdata;
 
     // Memory:
     rvfi.mem_addr = dut.datapath.alu_out_wb;

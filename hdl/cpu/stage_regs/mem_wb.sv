@@ -1,14 +1,11 @@
 module reg_mem_wb
 import rv32i_types::*;
-
-// ports
 (
-    // inputs
     input clk,
     input rst,
     input logic load,
 
-    input rv32i_word pc_mem,
+    input rv32i_pc_word pc_mem,
     input rv32i_control_word ctrl_mem,
     input rv32i_reg_word regs_mem,
     input logic br_en_mem,
@@ -23,8 +20,7 @@ import rv32i_types::*;
     input logic trap_in,
     input logic cur_stall_in,
 
-    // outputs
-    output rv32i_word pc_wb,
+    output rv32i_pc_word pc_wb,
     output rv32i_control_word ctrl_wb,
     output rv32i_reg_word regs_wb,
     output logic br_en_wb,
@@ -44,8 +40,8 @@ always_ff @(posedge clk)
 begin
     if (rst)
     begin
-        ctrl_wb <= '0;
         pc_wb <= '0;
+        ctrl_wb <= '0;
         regs_wb <= '0;
         br_en_wb <= '0;
 

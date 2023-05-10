@@ -4,8 +4,10 @@ import rv32i_types::*;
     input logic clk,
     input logic rst,
     input logic load,
-    input logic bp_correctness,     // Whether last prediction was correct; 1 = correct prediction
-    
+    input logic update,
+
+    input logic brp_ex,
+
     output logic br_prediction
 );
 
@@ -31,39 +33,42 @@ end
 
 always_comb
 begin : next_state_logic
-    case (state)
-        s_snt:
-        begin
-            if (bp_correctness) next_state = s_snt;
-            else next_state = s_wnt;
-        end
+    if (brp_ex.mp_valid)
+    begin
+        case (state)
+            s_snt:
+            begin
+                if (brp_ex.mispredicted) next_state = s_wnt;
+                else next_state = s_snt;
+            end
 
-        s_wnt:
-        begin
-            if (bp_correctness) next_state = s_snt;
-            else next_state = s_wt;
-        end
+            s_wnt:
+            begin
+                if (brp_ex.mispredicted) next_state = s_wt;
+                else next_state = s_snt;
+            end
 
-        s_wt:
-        begin
-            if (bp_correctness) next_state = s_st;
-            else next_state = s_wnt;
-        end
+            s_wt:
+            begin
+                if (brp_ex.mispredicted) next_state = s_wnt;
+                else next_state = s_st;
+            end
 
-        s_st:
-        begin
-            if (bp_correctness) next_state = s_st;
-            else next_state = s_wt;
-        end
+            s_st:
+            begin
+                if (brp_ex.mispredicted) next_state = s_wt;
+                else next_state = s_st;
+            end
 
-        default: next_state = s_wnt;
-    endcase
+            default: next_state = s_wnt;
+        endcase
+    end
 end
 
 always_ff @(posedge clk)
 begin : next_state_assignment
     if (rst) state <= s_wnt;
-    else if (load) state <= next_state;
+    else if (update) state <= next_state;
     else state <= state;
 end
 
