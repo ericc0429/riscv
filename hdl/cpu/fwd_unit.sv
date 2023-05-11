@@ -42,6 +42,7 @@ end
 always_comb
 begin : rs1_forwarding
     rs1_fwdflag = '0;
+    rs1_fwd = '0;
 
     if (rs1_ex != '0)      //check for hazard
     begin
@@ -65,6 +66,7 @@ end
 always_comb
 begin : rs2_forwarding
     rs2_fwdflag = '0;
+    rs2_fwd = '0;
 
     if (rs2_ex != '0)
     begin

@@ -29,7 +29,7 @@ synth: $(SRCS) $(SYNTH_TCL)
     fi
 
 report_power: $(ASM) run
-	cd sim && fsdb2saif 
+	cd sim && fsdb2saif dump.fsdb
 	cd synth && dc_shell -f ../report_power.tcl 2>&1 | tee report_power.log
 
 clean: 

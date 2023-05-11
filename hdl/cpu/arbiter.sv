@@ -43,6 +43,7 @@ always_comb begin
         '0: begin
             pmem_read = instr_read;
             pmem_address = instr_addr;
+            pmem_wdata = '0;
         end
         
         '1: begin
@@ -58,15 +59,15 @@ end
 always_comb begin
     instr_mem_resp = '0;
     data_mem_resp = '0;
+    instr_cacheline = pmem_rdata;
+    data_cacheline = pmem_rdata;
 
     if (pmem_resp && (service == '0)) begin
         instr_mem_resp  = pmem_resp;
-        instr_cacheline = pmem_rdata;
     end
 
     else if (pmem_resp && (service == '1)) begin
         data_mem_resp  = pmem_resp;
-        data_cacheline = pmem_rdata;
     end
 end
 
@@ -75,6 +76,7 @@ always_comb /* ff @(posedge clk) */ begin
         service = '0;
     if (data_read || data_write) 
         service = '1;
+    else service = '0;
 end
 
 endmodule : arbiter
