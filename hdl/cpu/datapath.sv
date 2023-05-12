@@ -28,7 +28,7 @@ import rv32i_types::*;
 
 /* ================ INTERNAL SIGNALS ================ */
 
-rv32i_word  addr_aligned_wr;
+rv32i_word addr_aligned_wr;
 
 /* === MASKS AND TRAP === */
 logic [3:0] wmask_wb;
