@@ -28,7 +28,7 @@ import rv32i_types::*;
 
 /* ================ INTERNAL SIGNALS ================ */
 
-// rv32i_word  addr_aligned_wr;
+rv32i_word  addr_aligned_wr;
 
 /* === MASKS AND TRAP === */
 logic [3:0] wmask_wb;
@@ -351,6 +351,7 @@ reg_mem_wb MEM_WB (
     .rmask_in       (rmask_mem),
     .trap_in        (trap_mem),
     .cur_stall_in   (cur_stall),
+    .addr_aligned_in (data_mem_address),
 
     // outputs
     .pc_wb,
@@ -366,6 +367,7 @@ reg_mem_wb MEM_WB (
     .wmask_out      (wmask_wb),
     .rmask_out      (rmask_wb),
     .trap_out       (trap_wb),
+    .addr_aligned_out (addr_aligned_wr),
     .cur_stall_out  (cur_stall_wb)
 );
 
