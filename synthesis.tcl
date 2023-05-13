@@ -50,7 +50,7 @@ check_design
 
 set_max_area 500000 -ignore_tns
 set clk_name $design_clock_pin
-create_clock -period 10 -name my_clk $clk_name
+create_clock -period 4.67 -name my_clk $clk_name
 set_dont_touch_network [get_clocks my_clk]
 set_fix_hold [get_clocks my_clk]
 set_clock_uncertainty 0.1 [get_clocks my_clk]
@@ -68,7 +68,7 @@ compile_ultra -no_autoungroup -gate_clock
 current_design mp4
 
 report_area -hier > reports/area.rpt
-report_timing -loops > reports/timing.rpt
+report_timing > reports/timing.rpt
 check_design > reports/check.rpt
 
 write_file -format ddc -hierarchy -output synth.ddc

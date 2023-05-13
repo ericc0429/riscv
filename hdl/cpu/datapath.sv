@@ -614,7 +614,7 @@ always_comb begin : MUXES
             endcase
         end
 
-        default: regfilemux_out = alu_out;
+        default: regfilemux_out = alu_out_wb;
     endcase
     
 end
