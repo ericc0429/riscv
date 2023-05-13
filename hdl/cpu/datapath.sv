@@ -375,7 +375,7 @@ reg_ex_mem EX_MEM (
     .br_en_ex   (br_en),
 
     .alu_res        (alu_out),
-    .write_data     (regs_ex.rs2_data),
+    .write_data     (regs_ex_fwd.rs2_data),
 
     .fwd_flag_ex    (rs2_fwdflag_mem2b),
     .regmux_ex      (regfilemux_out),
