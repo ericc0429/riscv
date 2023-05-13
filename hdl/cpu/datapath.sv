@@ -28,16 +28,6 @@ import rv32i_types::*;
 
 /* ================ INTERNAL SIGNALS ================ */
 
-rv32i_word addr_aligned_wr;
-
-/* === MASKS AND TRAP === */
-logic [3:0] wmask_wb;
-logic [3:0] rmask_mem;
-logic [3:0] rmask_wb;
-
-logic trap_mem;
-logic trap_wb;
-
 /* === Stage Register Loads === */
 logic load_if_id;
 logic load_id_ex;
@@ -119,10 +109,6 @@ logic br_en;
 logic br_en_mem;
 logic br_en_wb;
 
-/* === BIT SHIFTING/ALIGNMENT === */
-rv32i_word wdata_out_final;
-assign data_mem_wdata = wdata_out_final << (8 * alu_out_mem[1:0]);
-
 logic pc_sel;   // br_en that only gets set if we are indeed branching
 assign pc_sel = (br_en || (ctrl_ex.opcode == op_jal || ctrl_ex.opcode == op_jalr)) & ctrl_ex.br_sel;
 
@@ -157,8 +143,6 @@ rv32i_word rdata_wb;
 rv32i_word data_addr_wb;
 rv32i_word orig_addr;
 rv32i_word orig_addr_wb;
-logic [1:0] bit_shift_mem;
-logic [1:0] bit_shift_wb;
 
 rv32i_word wdata_out;
 rv32i_word wdata_wb;
@@ -244,6 +228,74 @@ assign regs_if.j_imm = {{12{instr_if[31]}}, instr_if[19:12], instr_if[20],
 assign regs_if.rs1 = instr_if[19:15];
 assign regs_if.rs2 = instr_if[24:20];
 assign regs_if.rd = instr_if[11:7];
+
+
+/* === BIT SHIFTING/ALIGNMENT === */
+rv32i_word wdata_out_final;
+assign data_mem_wdata = wdata_out_final << (8 * alu_out_mem[1:0]);
+
+rv32i_word addr_aligned_mem, addr_aligned_wb;
+assign addr_aligned_mem = {alu_out_mem[31:2], 2'b00};
+
+logic [1:0] bit_shift_mem, bit_shift_wb;
+assign bit_shift_mem = alu_out_mem[1:0];
+
+/* === Masks & Traps === */
+logic [3:0] wmask_mem, rmask_mem;
+logic [3:0] wmask_wb, rmask_wb;
+logic trap_mem, trap_wb;
+
+// Set signals to be output to memory
+assign data_mbe = wmask_mem;
+assign data_mem_address = addr_aligned_mem;
+
+// determine byte enable based on last 2 bits of address
+always_comb
+begin : trap_check
+    trap_mem = '0;
+    rmask_mem = '0;
+    wmask_mem = '0;
+
+    case(ctrl_mem.opcode)
+
+        op_lui, op_auipc, op_imm, op_reg, op_jal, op_jalr:;
+
+        op_br: begin
+            case (branch_funct3_t'(ctrl_mem.funct3))
+                beq, bne, blt, bge, bltu, bgeu:;
+                default: trap_mem = '1;
+            endcase
+        end
+
+        op_store: begin
+            case(store_funct3_t'(ctrl_mem.funct3))
+                sw: wmask_mem = 4'b1111;
+                
+                sh: wmask_mem = 4'b0011 << alu_out_mem[1:0];
+                
+                sb: wmask_mem = 4'b0001 << alu_out_mem[1:0];
+
+                default: begin
+                    trap_mem = '1;
+                end
+            endcase
+        end
+
+        op_load: begin
+            case(load_funct3_t'(ctrl_mem.funct3))
+
+                lw: rmask_mem = 4'b1111;
+                lh, lhu: rmask_mem = 4'b0011 << alu_out_mem[1:0];
+                lb, lbu: rmask_mem = 4'b0001 << alu_out_mem[1:0];
+                default: begin
+                    trap_mem = '1;
+                end
+            endcase
+        end
+
+        default: trap_mem = '1;
+    endcase
+end
 
 /* ================ ALU / CMP ================ */
 
@@ -334,13 +386,7 @@ reg_ex_mem EX_MEM (
     .regs_mem,
     .br_en_mem,
 
-    .addr_aligned   (data_mem_address),
     .alu_res_out    (alu_out_mem),
-    .bit_shift      (bit_shift_mem),
-    .mem_byte_enable(data_mbe),
-
-    .rmask_out      (rmask_mem),
-    .trap_out       (trap_mem),
     .write_data_out (wdata_out),
 
     .fwd_flag_mem   (rs2_2b_n1b),
@@ -357,16 +403,15 @@ reg_mem_wb MEM_WB (
     .regs_mem,
     .br_en_mem,
 
-    .mem_rdata      (data_mem_rdata),
     .alu_res        (alu_out_mem),
-    .bit_shift      (bit_shift_mem),
-
+    .mem_rdata      (data_mem_rdata),
+    .addr_aligned_in(addr_aligned_mem),
     .write_data     (data_mem_wdata),
-    .wmask_in       (data_mbe),
+    .bit_shift      (bit_shift_mem),
+    .wmask_in       (wmask_mem),
     .rmask_in       (rmask_mem),
     .trap_in        (trap_mem),
     .cur_stall_in   (cur_stall),
-    .addr_aligned_in (data_mem_address),
 
     // outputs
     .pc_wb,
@@ -382,7 +427,7 @@ reg_mem_wb MEM_WB (
     .wmask_out      (wmask_wb),
     .rmask_out      (rmask_wb),
     .trap_out       (trap_wb),
-    .addr_aligned_out (addr_aligned_wr),
+    .addr_aligned_out (addr_aligned_wb),
     .cur_stall_out  (cur_stall_wb)
 );
 

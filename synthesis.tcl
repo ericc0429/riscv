@@ -68,7 +68,7 @@ compile_ultra -no_autoungroup -gate_clock
 current_design mp4
 
 report_area -hier > reports/area.rpt
-report_timing > reports/timing.rpt
+report_timing -loops > reports/timing.rpt
 check_design > reports/check.rpt
 
 write_file -format ddc -hierarchy -output synth.ddc

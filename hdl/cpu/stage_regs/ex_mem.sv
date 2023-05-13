@@ -16,25 +16,27 @@ import rv32i_types::*;
     input logic fwd_flag_ex,
     input rv32i_word regmux_ex,
 
-    output rv32i_word pc_mem,
-    output rv32i_control_word ctrl_mem,
-    output rv32i_reg_word regs_mem,
-    output logic br_en_mem,
+    output rv32i_word           pc_mem,
+    output rv32i_control_word   ctrl_mem,
+    output rv32i_reg_word       regs_mem,
+    output logic                br_en_mem,
 
-    output rv32i_word addr_aligned,         // aligned to 4B (i.e. last 2 bits = 00)
-    output rv32i_word alu_res_out,          // represents original addr or operation result
+    output rv32i_word           alu_res_out,          // represents original addr or operation result
+    output rv32i_word           write_data_out,
+
+    output logic                fwd_flag_mem,
+    output rv32i_word           regmux_mem
+
+    /* output rv32i_word addr_aligned,         // aligned to 4B (i.e. last 2 bits = 00)
     output logic [1:0] bit_shift,
     output logic [3:0] mem_byte_enable,
-
     output logic [3:0] rmask_out,
-    output logic trap_out,
-    output rv32i_word write_data_out,
+    output logic trap_out, */
+    
 
-    output logic fwd_flag_mem,
-    output rv32i_word regmux_mem
 );
 
-rv32i_word addr;      // purely for clarity
+/* rv32i_word addr;      // purely for clarity
 assign addr = alu_res;
 
 logic [1:0] last2addr;
@@ -78,8 +80,8 @@ begin : trap_check
             case(load_funct3_t'(ctrl_ex.funct3))
 
                 lw: rmask = 4'b1111;
-                lh, lhu: rmask = 4'b0011 << last2addr /* Modify for MP1 Final */ ;
-                lb, lbu: rmask = 4'b0001 << last2addr /* Modify for MP1 Final */ ;
+                lh, lhu: rmask = 4'b0011 << last2addr;
+                lb, lbu: rmask = 4'b0001 << last2addr;
                 default: begin
                     trap = '1;
                 end
@@ -88,9 +90,20 @@ begin : trap_check
 
         default: trap = '1;
     endcase
-end
+end */
 
-always_ff @(posedge clk)
+rv32i_word pc_d;
+rv32i_control_word ctrl_d;
+rv32i_reg_word regs_d;
+logic br_en_d;
+
+rv32i_word alu_res_d;
+rv32i_word write_data_d;
+
+logic fwd_flag_d;
+rv32i_word regmux_d;
+
+/* always_ff @(posedge clk)
 begin
     if (rst)
     begin
@@ -99,14 +112,14 @@ begin
         regs_mem <= '0;
         br_en_mem <= '0;
 
-        addr_aligned <= '0;
         alu_res_out <= '0;
+        write_data_out <= '0;
+
+        addr_aligned <= '0;
         bit_shift <= '0;
         mem_byte_enable <= '0;
-
         rmask_out <= '0;
         trap_out <= '0;
-        write_data_out <= '0;
 
         fwd_flag_mem <= '0;
         regmux_mem <= '0;
@@ -151,6 +164,63 @@ begin
         fwd_flag_mem <= fwd_flag_mem;
         regmux_mem <= regmux_mem;
     end
+end */
+
+always_ff @(posedge clk)
+begin
+    if (rst)
+    begin
+        pc_d <= '0;
+        ctrl_d <= '0;
+        regs_d <= '0;
+        br_en_d <= '0;
+
+        alu_res_d <= '0;
+        write_data_d <= '0;
+
+        fwd_flag_d <= '0;
+        regmux_d <= '0;
+    end
+
+    else if (load)
+    begin
+        pc_d <= pc_ex;
+        ctrl_d <= ctrl_ex;
+        regs_d <= regs_ex;
+        br_en_d <= br_en_ex;
+
+        alu_res_d <= alu_res;
+        write_data_d <= write_data;
+
+        fwd_flag_d <= fwd_flag_ex;
+        regmux_d <= regmux_ex;
+    end
+    
+    else
+    begin
+        pc_d <= pc_d;
+        ctrl_d <= ctrl_d;
+        regs_d <= regs_d;
+        br_en_d <= br_en_d;
+
+        alu_res_d <= alu_res_d;
+        write_data_d <= write_data_d;
+
+        fwd_flag_d <= fwd_flag_d;
+        regmux_d <= regmux_d;
+    end
+end
+
+always_comb
+begin
+    pc_mem = pc_d;
+    ctrl_mem = ctrl_d;
+    regs_mem = regs_d;
+    br_en_mem = br_en_d;
+    alu_res_out  = alu_res_d;
+    write_data_out = write_data_d;
+    fwd_flag_mem = fwd_flag_d;
+    regmux_mem = regmux_d;
 end
 
 endmodule : reg_ex_mem

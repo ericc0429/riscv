@@ -62,7 +62,7 @@ function void set_defaults();
     rvfi.pc_wdata = dut.datapath.pc_wb;
 
     // Memory:
-    rvfi.mem_addr = dut.datapath.addr_aligned_wr;
+    rvfi.mem_addr = dut.datapath.addr_aligned_wb;
     rvfi.mem_rmask = dut.datapath.rmask_wb;
     rvfi.mem_wmask = dut.datapath.wmask_wb;
     rvfi.mem_rdata = dut.datapath.rdata_wb;
