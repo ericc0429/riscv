@@ -1,0 +1,68 @@
+ 
+****************************************
+Report : timing
+        -loops
+        -max_paths 1
+Design : mp4
+Version: R-2020.09-SP4
+Date   : Fri May 12 21:42:39 2023
+****************************************
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+  Startpoint: datapath/U661/ZN (internal pin)
+  Endpoint: datapath/U661/ZN (internal pin)
+  Path Group: (none)
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  mp4                5K_hvratio_1_1        NangateOpenCellLibrary
+
+  Point                                       Fanout      Incr       Path
+  --------------------------------------------------------------------------
+  datapath/U661/ZN (NAND2_X1)                             0.00       0.00 r
+  datapath/n507 (net)                          18         0.00       0.00 r
+  datapath/ALU/b[0] (alu_0)                               0.00       0.00 r
+  datapath/ALU/b[0] (net)                                 0.00       0.00 r
+  datapath/ALU/U596/A1 (NOR2_X1)                          0.03       0.03 r
+  datapath/ALU/U596/ZN (NOR2_X1)                          0.01       0.04 f
+  datapath/ALU/n546 (net)                       1         0.00       0.04 f
+  datapath/ALU/U459/A (AOI221_X1)                         0.01       0.05 f
+  datapath/ALU/U459/ZN (AOI221_X1)                        0.05       0.09 r
+  datapath/ALU/n567 (net)                       1         0.00       0.09 r
+  datapath/ALU/U604/A (AOI211_X1)                         0.01       0.11 r
+  datapath/ALU/U604/ZN (AOI211_X1)                        0.02       0.13 f
+  datapath/ALU/n569 (net)                       1         0.00       0.13 f
+  datapath/ALU/U453/A (OAI21_X1)                          0.01       0.14 f
+  datapath/ALU/U453/ZN (OAI21_X1)                         0.03       0.17 r
+  datapath/ALU/f[0] (net)                       3         0.00       0.17 r
+  datapath/ALU/f[0] (alu_0)                               0.00       0.17 r
+  datapath/alu_out[0] (net)                               0.00       0.17 r
+  datapath/U133/A (INV_X1)                                0.02       0.19 r
+  datapath/U133/ZN (INV_X1)                               0.01       0.20 f
+  datapath/n342 (net)                           1         0.00       0.20 f
+  datapath/U146/C2 (OAI211_X1)                            0.01       0.21 f
+  datapath/U146/ZN (OAI211_X1)                            0.10       0.31 r
+  datapath/n475 (net)                           7         0.00       0.31 r
+  datapath/FWD_UNIT/regfilemux_out[0] (fwd_unit)          0.00       0.31 r
+  datapath/FWD_UNIT/regfilemux_out[0] (net)               0.00       0.31 r
+  datapath/FWD_UNIT/U143/B2 (AOI222_X1)                   0.02       0.33 r
+  datapath/FWD_UNIT/U143/ZN (AOI222_X1)                   0.04       0.36 f
+  datapath/FWD_UNIT/n100 (net)                  1         0.00       0.36 f
+  datapath/FWD_UNIT/U231/A (INV_X1)                       0.01       0.37 f
+  datapath/FWD_UNIT/U231/ZN (INV_X1)                      0.03       0.40 r
+  datapath/FWD_UNIT/rs2_fwd[0] (net)            2         0.00       0.40 r
+  datapath/FWD_UNIT/rs2_fwd[0] (fwd_unit)                 0.00       0.40 r
+  datapath/rs2_fwd[0] (net)                               0.00       0.40 r
+  datapath/U660/A2 (AOI22_X1)                             0.01       0.42 r
+  datapath/U660/ZN (AOI22_X1)                             0.02       0.44 f
+  datapath/n602 (net)                           1         0.00       0.44 f
+  datapath/U661/A2 (NAND2_X1)                             0.01       0.45 f
+  datapath/U661/ZN (NAND2_X1)                             0.13       0.58 r
+  datapath/n507 (net)                          18         0.00       0.58 r
+  data arrival time                                                  0.58
+  --------------------------------------------------------------------------
+
+1
