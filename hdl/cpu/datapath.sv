@@ -211,7 +211,7 @@ regfile regfile (
     .reg_b  (rs2_data)
 );
 
-ir IR(
+/* ir IR(
     .clk    (clk),
     .rst    (rst || flush),
     .load   (load_if_id),
@@ -228,7 +228,22 @@ ir IR(
     .opcode (opcode_if),
     .funct3 (funct3_if),
     .funct7 (funct7_if)
-);
+); */
+
+assign instr_if = instr_mem_rdata;
+assign funct3_if = instr_if[14:12];
+assign funct7_if = instr_if[31:25];
+assign opcode_if = rv32i_opcode'(instr_if[6:0]);
+assign regs_if.i_imm = {{21{instr_if[31]}}, instr_if[30:20]};
+assign regs_if.s_imm = {{21{instr_if[31]}}, instr_if[30:25], instr_if[11:7]};
+assign regs_if.b_imm = {{20{instr_if[31]}}, instr_if[7], instr_if[30:25],
+                 instr_if[11:8], 1'b0};
+assign regs_if.u_imm = {instr_if[31:12], 12'h000};
+assign regs_if.j_imm = {{12{instr_if[31]}}, instr_if[19:12], instr_if[20],
+                 instr_if[30:21], 1'b0};
+assign regs_if.rs1 = instr_if[19:15];
+assign regs_if.rs2 = instr_if[24:20];
+assign regs_if.rd = instr_if[11:7];
 
 /* ================ ALU / CMP ================ */
 
@@ -265,7 +280,7 @@ reg_if_id IF_ID (
 
     // Inputs
     .pc_if,
-    .instr_if   (instr_mem_rdata),
+    .instr_if,
     .opcode_if,
     .funct3_if,
     .funct7_if,

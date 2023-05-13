@@ -33,20 +33,19 @@ assign rs2 = data[24:20];
 assign rd = data[11:7];
 
 //why "=" instead of "<="
-//always_ff @(posedge clk)
-always_comb
+always_ff @(posedge clk)
 begin
     if (rst)
     begin
-        data = '0;
+        data <= '0;
     end
     else if (load == 1)
     begin
-        data = in;
+        data <= in;
     end
     else
     begin
-        data = data;
+        data <= data;
     end
 end
 
