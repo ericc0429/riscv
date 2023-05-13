@@ -71,12 +71,12 @@ always_comb begin
     end
 end
 
-always_comb /* ff @(posedge clk) */ begin
+always_ff @(posedge clk) begin
     if (instr_read)
-        service = '0;
+        service <= '0;
     if (data_read || data_write) 
-        service = '1;
-    else service = '0;
+        service <= '1;
+    else service <= '0;
 end
 
 endmodule : arbiter
