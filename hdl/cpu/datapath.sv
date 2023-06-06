@@ -59,9 +59,56 @@ rv32i_word pc_wdata_ex;
 rv32i_word pc_mem;
 rv32i_word pc_wb;
 
-/* === ir signals === */
-logic load_ir;
-assign load_ir = instr_mem_resp;
+/* === regfile signals === */
+rv32i_word regfilemux_out;
+
+// register indexes
+rv32i_reg rs1;
+rv32i_reg rs2;
+rv32i_reg rs1_ex;
+rv32i_reg rs2_ex;
+
+rv32i_reg rd_id;
+rv32i_reg rd_ex;
+rv32i_reg rd_mem;
+rv32i_reg rd_wr;
+
+// register data
+rv32i_word rs1_data;
+rv32i_word rs2_data;
+rv32i_word rs1_data_ex;
+rv32i_word rs2_data_ex;
+rv32i_word rs1_data_final;      // either chose fwd val or curr reg val
+rv32i_word rs2_data_final;
+
+/* === immediates === */
+rv32i_word i_imm;
+rv32i_word s_imm;
+rv32i_word b_imm;
+rv32i_word u_imm;
+rv32i_word j_imm;
+
+rv32i_word i_imm_ex;
+rv32i_word s_imm_ex;
+rv32i_word b_imm_ex;
+rv32i_word u_imm_ex;
+rv32i_word j_imm_ex;
+
+rv32i_word u_imm_mem;
+rv32i_word u_imm_wr;
+
+/* === ALU signals === */
+rv32i_word alupc_out;
+rv32i_word alu_out;
+rv32i_word alu_out_mem;
+rv32i_word alu_out_wr;
+rv32i_word alumux1_out;
+rv32i_word alumux2_out;
+
+rv32i_word arith_out;
+
+/* === CMP signals === */
+rv32i_word cmpmux_out;
 
 /* === Control ROM signals === */ 
 rv32i_control_word ctrl;
@@ -307,8 +354,9 @@ reg_ex_mem EX_MEM (
     .regs_ex    (regs_ex_fwd),
     .br_en_ex   (br_en),
 
-    .alu_res        (alu_out),
-    .write_data     (regs_ex.rs2_data),
+    .alu_res        (arith_out),
+    .write_data     (rs2_data_ex),
+    .u_imm          (u_imm_ex),
 
     .fwd_flag_ex    (rs2_fwdflag_mem2b),
     .regmux_ex      (regfilemux_out),
@@ -418,33 +466,28 @@ hdu HDU (
     .sd
 );
 
-always_comb begin : ID_REG_UPDATE
-    // Passes values from regs_id to regs_id_data.
-    // Allows us to have the regfile update the rs1_data and rs2_data fields.
-    regs_id_data.rs1        = regs_id.rs1;
-    regs_id_data.rs2        = regs_id.rs2;
-    regs_id_data.rd         = regs_id.rd;
-    regs_id_data.rs1_data   = rs1_data;
-    regs_id_data.rs2_data   = rs2_data;
-    regs_id_data.i_imm      = regs_id.i_imm;
-    regs_id_data.s_imm      = regs_id.s_imm;
-    regs_id_data.b_imm      = regs_id.b_imm;
-    regs_id_data.u_imm      = regs_id.u_imm;
-    regs_id_data.j_imm      = regs_id.j_imm;
-end
+/* ================ MULTIPLIER ================ */
+logic [31:0] muldiv_res;
+logic [63:0] mult_res;
+logic [31:0] div_res, rem_res;
 
-always_comb begin : EX_REG_UPDATE
-    regs_ex_fwd.rs1        = regs_ex.rs1;
-    regs_ex_fwd.rs2        = regs_ex.rs2;
-    regs_ex_fwd.rd         = regs_ex.rd;
-    regs_ex_fwd.rs1_data   = rs1_data_final;
-    regs_ex_fwd.rs2_data   = rs2_data_final;
-    regs_ex_fwd.i_imm      = regs_ex.i_imm;
-    regs_ex_fwd.s_imm      = regs_ex.s_imm;
-    regs_ex_fwd.b_imm      = regs_ex.b_imm;
-    regs_ex_fwd.u_imm      = regs_ex.u_imm;
-    regs_ex_fwd.j_imm      = regs_ex.j_imm;
-end
+wall_tree wallace (
+    .a(rs1_data_final),
+    .b(rs2_data_final),
+    .op1sign(ctrl_ex.su_op1),
+    .op2sign(ctrl_ex.su_op2),
+    
+    .f(mult_res)
+);
+
+divider DIV (
+    .a(rs1_data_final),
+    .b(rs2_data_final),
+    .sign(ctrl_ex.divsign),
+
+    .f(div_res),
+    .rem(rem_res)
+);
 
 /* ================ MUXES ================ */
 always_comb begin : MUXES
@@ -511,6 +554,23 @@ always_comb begin : MUXES
         alumux::j_imm:      alumux2_out = regs_ex_fwd.j_imm;
         alumux::rs2_out:    alumux2_out = regs_ex_fwd.rs2_data;
         default:            alumux2_out = regs_ex_fwd.i_imm;
+    endcase
+
+    // MULDIV MUX - choose whether to look at mul or div result 
+    unique case (ctrl_ex.muldiv_mux_sel)
+        muldiv_mux::mul_l:      muldiv_res = mult_res[31:0];
+        muldiv_mux::mul_u:      muldiv_res = mult_res[63:32];
+        muldiv_mux::div:        muldiv_res = div_res;
+        muldiv_mux::rem:        muldiv_res = rem_res;
+        default:                muldiv_res = mult_res[31:0];
+    endcase
+
+    // ARITH MUX - choose whether to send ALU output or muldiv output past ex stage
+    unique case (ctrl_ex.arith_mux_sel)
+        1'b0:       arith_out = alu_out;
+        // 1'b1:       arith_out = (mult_res >> (32*ctrl_ex.muldiv_mask))[31:0];
+        1'b1:       arith_out = muldiv_res;
+        default:    arith_out = alu_out;
     endcase
 
     // REGFILE MUX
