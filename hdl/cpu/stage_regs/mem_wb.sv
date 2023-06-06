@@ -1,14 +1,11 @@
 module reg_mem_wb
 import rv32i_types::*;
-
-// ports
 (
-    // inputs
     input clk,
     input rst,
     input logic load,
 
-    input rv32i_word pc_mem,
+    input rv32i_pc_word pc_mem,
     input rv32i_control_word ctrl_mem,
     input rv32i_reg_word regs_mem,
     input logic br_en_mem,
@@ -22,10 +19,8 @@ import rv32i_types::*;
     input logic [3:0] rmask_in,
     input logic trap_in,
     input logic cur_stall_in,
-    input rv32i_word addr_aligned_in,
 
-    // outputs
-    output rv32i_word pc_wb,
+    output rv32i_pc_word pc_wb,
     output rv32i_control_word ctrl_wb,
     output rv32i_reg_word regs_wb,
     output logic br_en_wb,
@@ -38,7 +33,6 @@ import rv32i_types::*;
     output logic [3:0] wmask_out,
     output logic [3:0] rmask_out,
     output logic trap_out,
-    output rv32i_word addr_aligned_out,
     output logic cur_stall_out
 );
 
@@ -46,8 +40,8 @@ always_ff @(posedge clk)
 begin
     if (rst)
     begin
-        ctrl_wb <= '0;
         pc_wb <= '0;
+        ctrl_wb <= '0;
         regs_wb <= '0;
         br_en_wb <= '0;
 
@@ -60,8 +54,6 @@ begin
         rmask_out <= '0;
         trap_out  <= '0;
         cur_stall_out <= '0;
-        addr_aligned_out <= '0;
-
     end
 
     else if (load)
@@ -80,8 +72,6 @@ begin
         rmask_out <= rmask_in;
         trap_out  <= trap_in;
         cur_stall_out <= cur_stall_in;
-        addr_aligned_out <= addr_aligned_in;
-
     end
     
     else
@@ -100,8 +90,6 @@ begin
         rmask_out <= rmask_out;
         trap_out  <= trap_out;
         cur_stall_out <= cur_stall_out;
-        addr_aligned_out <= addr_aligned_out;
-
     end
 end
 

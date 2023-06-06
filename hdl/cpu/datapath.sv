@@ -28,7 +28,7 @@ import rv32i_types::*;
 
 /* ================ INTERNAL SIGNALS ================ */
 
-rv32i_word  addr_aligned_wr;
+// rv32i_word  addr_aligned_wr;
 
 /* === MASKS AND TRAP === */
 logic [3:0] wmask_wb;
@@ -52,18 +52,31 @@ logic cur_stall_wb;
 /* === PC signals === */
 logic load_pc;
 rv32i_word pcmux_out;
-rv32i_word pc_if;
-rv32i_word pc_id;
-rv32i_word pc_ex;
+/* rv32i_word pc_ex;
 rv32i_word pc_wdata_ex;
 rv32i_word pc_mem;
-rv32i_word pc_wb;
+rv32i_word pc_wb; */
 
 /* === ir signals === */
 logic load_ir;
 assign load_ir = instr_mem_resp;
 
-/* === Control ROM signals === */ 
+/* === PC WORD === */
+rv32i_word pc_wdata_if;
+rv32i_word pc_wdata_ex;
+
+rv32i_pc_word pc_if;
+// assign pc_if.pc_wdata = pc_if.pc + 4;
+assign pc_if.pc_wdata = pc_wdata_if;
+assign pc_if.instr = instr_mem_rdata;
+rv32i_pc_word pc_id;
+// rv32i_pc_word pc_id_final;
+rv32i_pc_word pc_ex;
+rv32i_pc_word pc_ex_final;
+rv32i_pc_word pc_mem;
+rv32i_pc_word pc_wb;
+
+/* === Control ROM signals === */
 rv32i_control_word ctrl;
 rv32i_control_word ctrl_id;
 rv32i_control_word ctrl_ex;
@@ -83,13 +96,11 @@ rv32i_reg_word regs_wb;
 rv32i_word regfilemux_out;
 
 // IF signals
-rv32i_word instr_if;
 rv32i_opcode opcode_if;
 logic [2:0] funct3_if;
 logic [6:0] funct7_if;
 
 // ID signals
-rv32i_word instr_id;
 rv32i_opcode opcode;
 logic [2:0] funct3;
 logic [6:0] funct7;
@@ -139,7 +150,7 @@ assign stall_pipeline = instr_stall || data_stall;
 /* === branch prediction === */
 logic flush;    // for branch prediction
 // static branch-not-taken predictor logic -- if branch taken, flush IF/ID & ID/EX
-assign flush = pc_sel && !stall_pipeline; 
+// assign flush = pc_sel && !stall_pipeline; 
 
 
 /* === forwarding unit === */
@@ -166,7 +177,37 @@ rv32i_word wdata_wb;
 assign instr_read = '1;     // just cp1 (always fetching)
 assign data_read = ctrl_mem.mem_read;
 assign data_write = ctrl_mem.mem_write;
-assign instr_mem_address = pc_if;
+assign instr_mem_address = pc_if.pc;
+
+/* ================ PREDICTOR ================ */
+logic load_brp;
+assign load_brp = (opcode_if == op_jal || opcode_if == op_br) && load_pc && !stall_pipeline;
+rv32i_brp_word brp_if;
+rv32i_brp_word brp_id;
+rv32i_brp_word brp_ex;
+rv32i_brp_word brp_ex_out;
+
+// For debug
+logic mispredicted;
+assign mispredicted = (brp_ex_out.predicted && brp_ex_out.mp_valid && brp_ex_out.mispredicted);
+
+brp PREDICTOR (
+    .clk,
+    .rst,
+    .load   (load_brp),
+    .update (ctrl_ex.opcode == op_br && !stall_pipeline),
+    
+    // Inputs
+    .pc_if  (pc_if.pc),
+    .opcode_if,
+    .b_imm  (regs_if.b_imm),
+    .j_imm  (regs_if.j_imm),
+
+    .brp_ex (brp_ex_out),
+
+    // Outputs
+    .brp_if
+);
 
 /* ================ PREDICTOR ================ */
 logic load_brp;
@@ -195,7 +236,7 @@ pc_register PC (
     .rst,
     .load   (load_pc),
     .in     (pcmux_out),
-    .out    (pc_if)
+    .out    (pc_if.pc)
 );
 
 regfile regfile (
@@ -212,7 +253,7 @@ regfile regfile (
 );
 
 ir IR(
-    .clk    (clk),
+    // .clk    (clk),
     .rst    (rst || flush),
     .load   (load_if_id),
     .in     (instr_mem_rdata),
@@ -234,7 +275,7 @@ ir IR(
 
 alu ALU_PC (
     .aluop  (alu_add),
-    .a      (pc_if),
+    .a      (pc_if.pc),
     .b      (32'd4),
     .f      (alupc_out)
 );
@@ -265,19 +306,19 @@ reg_if_id IF_ID (
 
     // Inputs
     .pc_if,
-    .instr_if   (instr_mem_rdata),
     .opcode_if,
     .funct3_if,
     .funct7_if,
     .regs_if,
+    .brp_if,
 
     // Outputs
     .pc_id,
-    .instr_id,
     .opcode_id  (opcode),
     .funct3_id  (funct3),
     .funct7_id  (funct7),
-    .regs_id
+    .regs_id,
+    .brp_id
 );
 
 reg_id_ex ID_EX (
@@ -286,14 +327,16 @@ reg_id_ex ID_EX (
     .load       (load_id_ex),
 
     // Inputs
-    .pc_id,
+    .pc_id      (pc_id),
     .ctrl_id,
     .regs_id    (regs_id_data),
+    .brp_id,
 
     // Outputs
     .pc_ex,
     .ctrl_ex,
-    .regs_ex
+    .regs_ex,
+    .brp_ex
 );
 
 reg_ex_mem EX_MEM (
@@ -302,7 +345,7 @@ reg_ex_mem EX_MEM (
     .load       (load_ex_mem),
 
     // Inputs
-    .pc_ex      (pc_wdata_ex),
+    .pc_ex      (pc_ex_final),
     .ctrl_ex,
     .regs_ex    (regs_ex_fwd),
     .br_en_ex   (br_en),
@@ -351,7 +394,6 @@ reg_mem_wb MEM_WB (
     .rmask_in       (rmask_mem),
     .trap_in        (trap_mem),
     .cur_stall_in   (cur_stall),
-    .addr_aligned_in (data_mem_address),
 
     // outputs
     .pc_wb,
@@ -367,7 +409,6 @@ reg_mem_wb MEM_WB (
     .wmask_out      (wmask_wb),
     .rmask_out      (rmask_wb),
     .trap_out       (trap_wb),
-    .addr_aligned_out (addr_aligned_wr),
     .cur_stall_out  (cur_stall_wb)
 );
 
@@ -402,10 +443,11 @@ fwd_unit FWD_UNIT (
 
 /* ================ HAZARD DETECTION UNIT ================ */
 hdu HDU (
+    .ctrl_id,
     .ctrl_ex,
-    .rs1_id     (regs_id.rs1),
-    .rs2_id     (regs_id.rs2),
-    .rd_ex      (regs_ex.rd),
+    .regs_if,
+    .regs_id    (regs_id_data),
+    .regs_ex    (regs_ex_fwd),
     .stall_pipeline,
     .ctrlmux_sel,
     .load_if_id,
@@ -418,7 +460,15 @@ hdu HDU (
     .sd
 );
 
-always_comb begin : ID_REG_UPDATE
+/* always_comb begin : IF_WORDS_UPDATE
+    // Passes values from pc_if to pc_if_final
+    // Allows us to update pc_wdata
+    pc_if_final.pc          = pc_if.pc;
+    pc_if_final.pc_wdata    = pc_wdata_if;
+    pc_if_final.instr       = pc_if.instr;
+end */
+
+always_comb begin : ID_WORDS_UPDATE
     // Passes values from regs_id to regs_id_data.
     // Allows us to have the regfile update the rs1_data and rs2_data fields.
     regs_id_data.rs1        = regs_id.rs1;
@@ -433,7 +483,13 @@ always_comb begin : ID_REG_UPDATE
     regs_id_data.j_imm      = regs_id.j_imm;
 end
 
-always_comb begin : EX_REG_UPDATE
+always_comb begin : EX_WORDS_UPDATE
+    pc_ex_final.pc          = pc_ex.pc;
+    //if (brp_ex_out.predicted && brp_ex_out.mp_valid)
+    pc_ex_final.pc_wdata    = pc_wdata_ex;
+    //else pc_ex_final.pc_wdata = pc_ex.pc_wdata;
+    pc_ex_final.instr       = pc_ex.instr;
+
     regs_ex_fwd.rs1        = regs_ex.rs1;
     regs_ex_fwd.rs2        = regs_ex.rs2;
     regs_ex_fwd.rd         = regs_ex.rd;
@@ -444,6 +500,13 @@ always_comb begin : EX_REG_UPDATE
     regs_ex_fwd.b_imm      = regs_ex.b_imm;
     regs_ex_fwd.u_imm      = regs_ex.u_imm;
     regs_ex_fwd.j_imm      = regs_ex.j_imm;
+
+    brp_ex_out.predicted = brp_ex.predicted;
+    brp_ex_out.prediction = brp_ex.prediction;
+    brp_ex_out.brp_target = brp_ex.brp_target;
+    brp_ex_out.brp_alt = brp_ex.brp_alt;
+    brp_ex_out.mp_valid = brp_ex.predicted;
+    brp_ex_out.mispredicted = (brp_ex.predicted && brp_ex.prediction != br_en);
 end
 
 /* ================ MUXES ================ */
@@ -482,7 +545,7 @@ always_comb begin : MUXES
     endcase
 
     // PC MUX
-    unique case (pc_sel)
+/*     unique case (pc_sel)
         1'b1:
         begin
             pcmux_out = alu_out;
@@ -491,15 +554,54 @@ always_comb begin : MUXES
         default:
         begin
             pcmux_out = alupc_out;
-            pc_wdata_ex = ctrl_ex.pc+4;
+            pc_wdata_ex = pc_ex.pc+4;
         end
-    endcase
+    endcase */
+
+    // New PC MUX
+    if (mispredicted)
+    begin   // Mispredicted; flush pipeline and reset to other branch target addr
+        pcmux_out = brp_ex_out.brp_alt;
+        pc_wdata_ex = brp_ex_out.brp_alt;
+        flush = !stall_pipeline; // Don't flush if pipeline is stalled
+    end
+    else if (ctrl_ex.opcode == op_jalr)
+    begin   // JALR: We'd have to treat similar to a misprediction
+        pcmux_out = alu_out;
+        pc_wdata_ex = alu_out;
+        flush = !stall_pipeline;
+    end
+    else
+    begin   // What if we predicted correctly? We need to update pc_wdata_ex still.
+        if (brp_ex_out.predicted && brp_ex_out.mp_valid)
+            pc_wdata_ex = brp_ex_out.brp_target;
+        else pc_wdata_ex = pc_ex.pc_wdata;
+
+        unique case (opcode_if)
+            op_jal:
+            begin
+                pcmux_out = brp_if.brp_target;
+                pc_wdata_if = brp_if.brp_target;
+            end
+            op_br:
+            begin
+                pcmux_out = brp_if.brp_target;
+                pc_wdata_if = brp_if.brp_target;
+            end
+            default:
+            begin
+                pcmux_out = alupc_out;
+                pc_wdata_if = alupc_out;
+            end
+        endcase
+        flush = '0;
+    end
 
     // ALU MUX #1
     unique case (ctrl_ex.alumux1_sel)
         alumux::rs1_out: alumux1_out = regs_ex_fwd.rs1_data;
-        alumux::pc_out: alumux1_out = pc_ex;
-        default: alumux1_out = pc_ex;
+        alumux::pc_out: alumux1_out = pc_ex.pc;
+        default: alumux1_out = pc_ex.pc;
     endcase
     
     // ALU MUX #2
@@ -520,7 +622,7 @@ always_comb begin : MUXES
         regfilemux::u_imm:   regfilemux_out = regs_wb.u_imm;
         regfilemux::lw:      regfilemux_out = rdata_wb;
 
-        regfilemux::pc_plus4: regfilemux_out = ctrl_wb.pc + 4;
+        regfilemux::pc_plus4: regfilemux_out = pc_wb.pc + 4;
         regfilemux::lb: begin
             case(bit_shift_wb)
                 2'b00: regfilemux_out = {{24{rdata_wb[7]}},rdata_wb[7:0]};

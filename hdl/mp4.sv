@@ -141,7 +141,7 @@ cache    Dcache( // Data
 );
 
 arbiter   arbiter(
-    .clk,
+    // .clk,
     // From caches
     .instr_read     (Icache_read),
     .instr_addr     (Icache_address),

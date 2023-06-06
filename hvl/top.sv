@@ -44,7 +44,7 @@ assign rvfi.rst = itf.rst;
 
 function void set_defaults();
     // Instruction and trap:
-    rvfi.inst = dut.datapath.ctrl_wb.instr;
+    rvfi.inst = dut.datapath.pc_wb.instr;
     rvfi.trap = dut.datapath.trap_wb;
 
     // Regfile:
@@ -58,11 +58,11 @@ function void set_defaults();
     rvfi.rd_wdata = dut.datapath.regfilemux_out;
 
     // PC:
-    rvfi.pc_rdata = dut.datapath.ctrl_wb.pc;
-    rvfi.pc_wdata = dut.datapath.pc_wb;
+    rvfi.pc_rdata = dut.datapath.pc_wb.pc;
+    rvfi.pc_wdata = dut.datapath.pc_wb.pc_wdata;
 
     // Memory:
-    rvfi.mem_addr = dut.datapath.addr_aligned_wr;
+    rvfi.mem_addr = dut.datapath.alu_out_wb;
     rvfi.mem_rmask = dut.datapath.rmask_wb;
     rvfi.mem_wmask = dut.datapath.wmask_wb;
     rvfi.mem_rdata = dut.datapath.rdata_wb;

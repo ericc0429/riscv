@@ -1,7 +1,7 @@
 module arbiter
 import rv32i_types::*;
 (
-    input clk,
+    // input clk,
     // From caches
     input logic instr_read,
     input rv32i_word instr_addr,
